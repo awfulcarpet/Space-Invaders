@@ -10,11 +10,12 @@ void unimplemented(uint8_t opcode) {
 
 int
 emulate(struct CPU *cpu) {
+	struct Registers registers = cpu->registers;
 	uint8_t *opcode = &cpu->ram[cpu->registers.pc];
 	int bytes = 1;
+
 	switch (*opcode) {
 		case 0x00: // NOP
-			unimplemented(opcode[0]);
 			break;
 		case 0x01: // LXI  B,d16
 			unimplemented(opcode[0]);
@@ -209,153 +210,153 @@ emulate(struct CPU *cpu) {
 			break;
 
 		case 0x40: // MOV B,B
-			unimplemented(opcode[0]);
+			registers.b = registers.b;
 			break;
 		case 0x41: // MOV B,C
-			unimplemented(opcode[0]);
+			registers.b = registers.c;
 			break;
 		case 0x42: // MOV B,D
-			unimplemented(opcode[0]);
+			registers.b = registers.d;
 			break;
 		case 0x43: // MOV B,E
-			unimplemented(opcode[0]);
+			registers.b = registers.e;
 			break;
 		case 0x44: // MOV B,H
-			unimplemented(opcode[0]);
+			registers.b = registers.h;
 			break;
 		case 0x45: // MOV B,L
-			unimplemented(opcode[0]);
+			registers.b = registers.l;
 			break;
 		case 0x46: // MOV B,M
 			unimplemented(opcode[0]);
 			break;
 		case 0x47: // MOV B,A
-			unimplemented(opcode[0]);
+			registers.b = registers.a;
 			break;
 
 		case 0x48: // MOV C,B
-			unimplemented(opcode[0]);
+			registers.c = registers.b;
 			break;
 		case 0x49: // MOV C,C
-			unimplemented(opcode[0]);
+			registers.c = registers.c;
 			break;
 		case 0x4a: // MOV C,D
-			unimplemented(opcode[0]);
+			registers.c = registers.d;
 			break;
 		case 0x4b: // MOV C,E
-			unimplemented(opcode[0]);
+			registers.c = registers.e;
 			break;
 		case 0x4c: // MOV C,H
-			unimplemented(opcode[0]);
+			registers.c = registers.h;
 			break;
 		case 0x4d: // MOV C,L
-			unimplemented(opcode[0]);
+			registers.c = registers.l;
 			break;
 		case 0x4e: // MOV C,M
 			unimplemented(opcode[0]);
 			break;
 		case 0x4f: // MOV C,A
-			unimplemented(opcode[0]);
+			registers.c = registers.a;
 			break;
 
 		case 0x50: // MOV D,B
-			unimplemented(opcode[0]);
+			registers.d = registers.b;
 			break;
 		case 0x51: // MOV D,C
-			unimplemented(opcode[0]);
+			registers.d = registers.c;
 			break;
 		case 0x52: // MOV D,D
-			unimplemented(opcode[0]);
+			registers.d = registers.d;
 			break;
 		case 0x53: // MOV D,E
-			unimplemented(opcode[0]);
+			registers.d = registers.e;
 			break;
 		case 0x54: // MOV D,H
-			unimplemented(opcode[0]);
+			registers.d = registers.h;
 			break;
 		case 0x55: // MOV D,L
-			unimplemented(opcode[0]);
+			registers.d = registers.l;
 			break;
 		case 0x56: // MOV D,M
 			unimplemented(opcode[0]);
 			break;
 		case 0x57: // MOV D,A
-			unimplemented(opcode[0]);
+			registers.d = registers.a;
 			break;
 
 		case 0x58: // MOV E,B
-			unimplemented(opcode[0]);
+			registers.e = registers.b;
 			break;
 		case 0x59: // MOV E,C
-			unimplemented(opcode[0]);
+			registers.e = registers.c;
 			break;
 		case 0x5a: // MOV E,D
-			unimplemented(opcode[0]);
+			registers.e = registers.d;
 			break;
 		case 0x5b: // MOV E,E
-			unimplemented(opcode[0]);
+			registers.e = registers.e;
 			break;
 		case 0x5c: // MOV E,H
-			unimplemented(opcode[0]);
+			registers.e = registers.h;
 			break;
 		case 0x5d: // MOV E,L
-			unimplemented(opcode[0]);
+			registers.e = registers.l;
 			break;
 		case 0x5e: // MOV E,M
 			unimplemented(opcode[0]);
 			break;
 		case 0x5f: // MOV E,A
-			unimplemented(opcode[0]);
+			registers.e = registers.a;
 			break;
 
 		case 0x60: // MOV H,B
-			unimplemented(opcode[0]);
+			registers.h = registers.b;
 			break;
 		case 0x61: // MOV H,C
-			unimplemented(opcode[0]);
+			registers.h = registers.c;
 			break;
 		case 0x62: // MOV H,D
-			unimplemented(opcode[0]);
+			registers.h = registers.d;
 			break;
 		case 0x63: // MOV H,E
-			unimplemented(opcode[0]);
+			registers.h = registers.e;
 			break;
 		case 0x64: // MOV H,H
-			unimplemented(opcode[0]);
+			registers.h = registers.h;
 			break;
 		case 0x65: // MOV H,L
-			unimplemented(opcode[0]);
+			registers.h = registers.l;
 			break;
 		case 0x66: // MOV H,M
 			unimplemented(opcode[0]);
 			break;
 		case 0x67: // MOV H,A
-			unimplemented(opcode[0]);
+			registers.h = registers.a;
 			break;
 
 		case 0x68: // MOV L,B
-			unimplemented(opcode[0]);
+			registers.l = registers.b;
 			break;
 		case 0x69: // MOV L,C
-			unimplemented(opcode[0]);
+			registers.l = registers.c;
 			break;
 		case 0x6a: // MOV L,D
-			unimplemented(opcode[0]);
+			registers.l = registers.d;
 			break;
 		case 0x6b: // MOV L,E
-			unimplemented(opcode[0]);
+			registers.l = registers.e;
 			break;
 		case 0x6c: // MOV L,H
-			unimplemented(opcode[0]);
+			registers.l = registers.h;
 			break;
 		case 0x6d: // MOV L,L
-			unimplemented(opcode[0]);
+			registers.l = registers.l;
 			break;
 		case 0x6e: // MOV L,M
 			unimplemented(opcode[0]);
 			break;
 		case 0x6f: // MOV L,A
-			unimplemented(opcode[0]);
+			registers.l = registers.a;
 			break;
 
 		case 0x70: // MOV M,B
@@ -384,28 +385,28 @@ emulate(struct CPU *cpu) {
 			unimplemented(opcode[0]);
 			break;
 		case 0x78: // MOV A,B
-			unimplemented(opcode[0]);
+			registers.a = registers.b;
 			break;
 		case 0x79: // MOV A,C
-			unimplemented(opcode[0]);
+			registers.a = registers.c;
 			break;
 		case 0x7a: // MOV A,D
-			unimplemented(opcode[0]);
+			registers.a = registers.d;
 			break;
 		case 0x7b: // MOV A,E
-			unimplemented(opcode[0]);
+			registers.a = registers.e;
 			break;
 		case 0x7c: // MOV A,H
-			unimplemented(opcode[0]);
+			registers.a = registers.h;
 			break;
 		case 0x7d: // MOV A,L
-			unimplemented(opcode[0]);
+			registers.a = registers.l;
 			break;
 		case 0x7e: // MOV A,H
-			unimplemented(opcode[0]);
+			registers.a = registers.h;
 			break;
 		case 0x7f: // MOV A,H
-			unimplemented(opcode[0]);
+			registers.a = registers.h;
 			break;
 
 		case 0x80: // ADD B
@@ -807,6 +808,6 @@ emulate(struct CPU *cpu) {
 			break;
 	}
 
-	cpu->registers.pc += bytes;
+	cpu->registers.pc += 1;
 	return 1;
 }

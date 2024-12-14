@@ -11,6 +11,7 @@ struct Flags {
 	uint8_t z:1;
 	uint8_t s:1;
 };
+
 struct Registers {
 	uint8_t a;
 	uint8_t b;
@@ -26,7 +27,7 @@ struct Registers {
 struct CPU {
 	struct Flags flags;
 	struct Registers registers;
-	uint8_t *ram;
+	uint8_t *ram; // little endian
 };
 
 int map(struct CPU *cpu, FILE *f);
