@@ -7,6 +7,7 @@ NAME = dissasembler
 OUTDIR = .build
 OBJ = \
       $(OUTDIR)/main.o \
+	  $(OUTDIR)/cpu.o \
 
 all: $(NAME)
 
