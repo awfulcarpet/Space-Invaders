@@ -630,7 +630,7 @@ emulate(struct CPU *cpu) {
 			unimplemented(opcode[0]);
 			break;
 		case 0xaf: // XRA A
-			unimplemented(opcode[0]);
+			registers->a ^= registers->a;
 			break;
 
 		case 0xb0: // ORA B
@@ -713,8 +713,15 @@ emulate(struct CPU *cpu) {
 			bytes = 2;
 			break;
 		case 0xc7: // RST 0
-			unimplemented(opcode[0]);
+		{
+			uint16_t adr = registers->pc + 3;
+			cpu->ram[registers->sp-1] = (adr >> 8) & 0xff;
+			cpu->ram[registers->sp-2] = adr & 0xff;
+			registers->sp -= 2;
+			registers->pc = 0x0000;
+			bytes = 0;
 			break;
+		}
 		case 0xc8: // RZ
 			unimplemented(opcode[0]);
 			break;
@@ -736,7 +743,16 @@ emulate(struct CPU *cpu) {
 			break;
 
 		case 0xcc: // CZ a16
-			unimplemented(opcode[0]);
+			if (!cpu->flags.z) {
+				bytes = 3;
+				break;
+			}
+			uint16_t adr = registers->pc + 3;
+			cpu->ram[registers->sp-1] = (adr >> 8) & 0xff;
+			cpu->ram[registers->sp-2] = adr & 0xff;
+			registers->sp -= 2;
+			registers->pc = (opcode[2] << 8) | opcode[1];
+			bytes = 0;
 			break;
 		case 0xcd: // CALL a16
 		{
@@ -752,8 +768,15 @@ emulate(struct CPU *cpu) {
 			unimplemented(opcode[0]);
 			break;
 		case 0xcf: // RST 1
-			unimplemented(opcode[0]);
+		{
+			uint16_t adr = registers->pc + 3;
+			cpu->ram[registers->sp-1] = (adr >> 8) & 0xff;
+			cpu->ram[registers->sp-2] = adr & 0xff;
+			registers->sp -= 2;
+			registers->pc = 0x0008;
+			bytes = 0;
 			break;
+		}
 		case 0xd0: // RNC
 			unimplemented(opcode[0]);
 			break;
@@ -782,8 +805,15 @@ emulate(struct CPU *cpu) {
 			unimplemented(opcode[0]);
 			break;
 		case 0xd7: // RST 2
-			unimplemented(opcode[0]);
+		{
+			uint16_t adr = registers->pc + 3;
+			cpu->ram[registers->sp-1] = (adr >> 8) & 0xff;
+			cpu->ram[registers->sp-2] = adr & 0xff;
+			registers->sp -= 2;
+			registers->pc = 0x0010;
+			bytes = 0;
 			break;
+		}
 		case 0xd8: // RC
 			unimplemented(opcode[0]);
 			break;
@@ -814,8 +844,15 @@ emulate(struct CPU *cpu) {
 			unimplemented(opcode[0]);
 			break;
 		case 0xdf: // RST 3
-			unimplemented(opcode[0]);
+		{
+			uint16_t adr = registers->pc + 3;
+			cpu->ram[registers->sp-1] = (adr >> 8) & 0xff;
+			cpu->ram[registers->sp-2] = adr & 0xff;
+			registers->sp -= 2;
+			registers->pc = 0x0018;
+			bytes = 0;
 			break;
+		}
 		case 0xe0: // RPO
 			unimplemented(opcode[0]);
 			break;
@@ -844,8 +881,15 @@ emulate(struct CPU *cpu) {
 			unimplemented(opcode[0]);
 			break;
 		case 0xe7: // RST 4
-			unimplemented(opcode[0]);
+		{
+			uint16_t adr = registers->pc + 3;
+			cpu->ram[registers->sp-1] = (adr >> 8) & 0xff;
+			cpu->ram[registers->sp-2] = adr & 0xff;
+			registers->sp -= 2;
+			registers->pc = 0x0020;
+			bytes = 0;
 			break;
+		}
 		case 0xe8: // RPE
 			unimplemented(opcode[0]);
 			break;
@@ -875,8 +919,15 @@ emulate(struct CPU *cpu) {
 			unimplemented(opcode[0]);
 			break;
 		case 0xef: // RST 5
-			unimplemented(opcode[0]);
+		{
+			uint16_t adr = registers->pc + 3;
+			cpu->ram[registers->sp-1] = (adr >> 8) & 0xff;
+			cpu->ram[registers->sp-2] = adr & 0xff;
+			registers->sp -= 2;
+			registers->pc = 0x0028;
+			bytes = 0;
 			break;
+		}
 		case 0xf0: // RP
 			unimplemented(opcode[0]);
 			break;
@@ -904,8 +955,15 @@ emulate(struct CPU *cpu) {
 			unimplemented(opcode[0]);
 			break;
 		case 0xf7: // RST 6
-			unimplemented(opcode[0]);
+		{
+			uint16_t adr = registers->pc + 3;
+			cpu->ram[registers->sp-1] = (adr >> 8) & 0xff;
+			cpu->ram[registers->sp-2] = adr & 0xff;
+			registers->sp -= 2;
+			registers->pc = 0x0030;
+			bytes = 0;
 			break;
+		}
 		case 0xf8: // RM
 			unimplemented(opcode[0]);
 			break;
@@ -934,8 +992,15 @@ emulate(struct CPU *cpu) {
 			unimplemented(opcode[0]);
 			break;
 		case 0xff: // RST 7
-			unimplemented(opcode[0]);
+		{
+			uint16_t adr = registers->pc + 3;
+			cpu->ram[registers->sp-1] = (adr >> 8) & 0xff;
+			cpu->ram[registers->sp-2] = adr & 0xff;
+			registers->sp -= 2;
+			registers->pc = 0x0038;
+			bytes = 0;
 			break;
+		}
 	}
 
 	cpu->registers.pc += bytes;
