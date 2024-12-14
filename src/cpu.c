@@ -4,7 +4,6 @@
 
 #include "cpu.h"
 
-// TODO: fix all parity checks
 int
 map(struct CPU *cpu, FILE *f) {
 	if (f == NULL) {
@@ -27,12 +26,14 @@ unimplemented(uint8_t opcode) {
 	exit(1);
 }
 
+// TODO: do set/reset flags later
 static void
 set_flags(struct CPU *cpu, uint16_t num, uint8_t flags) {
 	if (flags & SIGN)
 		cpu->flags.s = (num & (0x01 << 7)) == 1;
 	if (flags & ZERO)
 		cpu->flags.z = (num & 0xff) == 0;
+	// TODO: fix all parity checks
 	if (flags & PARITY)
 		cpu->flags.p = (num & 0xff) % 2 == 0;
 	if (flags & CARRY)
@@ -220,7 +221,7 @@ emulate(struct CPU *cpu) {
 			bytes = 2;
 			break;
 		case 0x2f: // CMA
-			unimplemented(opcode[0]);
+			registers->a = ~registers->a;
 			break;
 		case 0x30: // 0x30 ILLEGAL
 			unimplemented(opcode[0]);
@@ -632,6 +633,7 @@ emulate(struct CPU *cpu) {
 			break;
 		case 0xaf: // XRA A
 			registers->a ^= registers->a;
+			set_flags(cpu, registers->a, SIGN | ZERO | PARITY);
 			break;
 
 		case 0xb0: // ORA B
@@ -879,7 +881,10 @@ emulate(struct CPU *cpu) {
 			unimplemented(opcode[0]);
 			break;
 		case 0xe6: // ANI d8
-			unimplemented(opcode[0]);
+			registers->a &= opcode[1];
+			set_flags(cpu, registers->a, SIGN | ZERO | PARITY);
+			cpu->flags.c = 0;
+			bytes = 2;
 			break;
 		case 0xe7: // RST 4
 		{
@@ -991,6 +996,9 @@ emulate(struct CPU *cpu) {
 
 		case 0xfe: // CPI d8
 			unimplemented(opcode[0]);
+			uint8_t res = registers->a - opcode[1];
+			set_flags(cpu, res, SIGN | ZERO | PARITY | CARRY);
+			cpu->flags.c = (registers->a < opcode[1]);
 			break;
 		case 0xff: // RST 7
 		{
