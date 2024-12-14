@@ -49,7 +49,9 @@ emulate(struct CPU *cpu) {
 		case 0x00: // NOP
 			break;
 		case 0x01: // LXI  B,d16
-			unimplemented(opcode[0]);
+			registers->c = opcode[1];
+			registers->b = opcode[2];
+			bytes = 3;
 			break;
 		case 0x02: // STAX B
 			unimplemented(opcode[0]);
