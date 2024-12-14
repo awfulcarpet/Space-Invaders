@@ -98,7 +98,9 @@ emulate(struct CPU *cpu) {
 			unimplemented(opcode[0]);
 			break;
 		case 0x11: // LXI  D,d16
-			unimplemented(opcode[0]);
+			registers->e = opcode[1];
+			registers->d = opcode[2];
+			bytes = 3;
 			break;
 		case 0x12: // STAX D
 			unimplemented(opcode[0]);
@@ -147,7 +149,9 @@ emulate(struct CPU *cpu) {
 			break;
 
 		case 0x21: // LXI  H,d16
-			unimplemented(opcode[0]);
+			registers->l = opcode[1];
+			registers->h = opcode[2];
+			bytes = 3;
 			break;
 		case 0x22: // SHLD a16
 			unimplemented(opcode[0]);
