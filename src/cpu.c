@@ -1,7 +1,24 @@
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "cpu.h"
+
+int
+map(struct CPU *cpu, FILE *f) {
+	if (f == NULL) {
+		perror("failed to open rom");
+		return 1;
+	}
+
+	fseek(f, 0, SEEK_END);
+	int len = ftell(f);
+	fseek(f, 0, SEEK_SET);
+	cpu->ram = malloc(len);
+
+	fread(cpu->ram, 1, len, f);
+	return 0;
+}
 
 static void
 unimplemented(uint8_t opcode) {
@@ -829,7 +846,7 @@ emulate(struct CPU *cpu) {
 	cpu->registers.pc += 1;
 
 	print_cpu_state(cpu);
-	return 1;
+	return 0;
 }
 
 void print_cpu_state(struct CPU *cpu) {
