@@ -4,6 +4,7 @@
 
 #include "cpu.h"
 
+// TODO: fix all parity checks
 int
 map(struct CPU *cpu, FILE *f) {
 	if (f == NULL) {
@@ -27,15 +28,20 @@ unimplemented(uint8_t opcode) {
 }
 
 static void
+set_flags(struct CPU *cpu, uint16_t num) {
+	cpu->flags.s = (num & (0x01 << 7)) != 0;
+	cpu->flags.z = (num & 0xff) == 0;
+	cpu->flags.p = (num & 0xff) % 2 == 0;
+	cpu->flags.c = num > 0xff;
+
+	cpu->registers.a = num & 0xff;
+}
+
+static void
 add(uint8_t reg, struct CPU *cpu) {
 	uint16_t ans = (uint16_t) cpu->registers.a + (uint16_t) reg;
 
-	cpu->flags.s = (ans & (0x01 << 7)) != 0;
-	cpu->flags.z = (ans & 0xff) == 0;
-	cpu->flags.p = (ans & 0xff) % 2 == 0;
-	cpu->flags.c = ans > 0xff;
-
-	cpu->registers.a = ans & 0xff;
+	set_flags(cpu, ans);
 }
 
 int
@@ -63,8 +69,14 @@ emulate(struct CPU *cpu) {
 			unimplemented(opcode[0]);
 			break;
 		case 0x05: // DCR  B
-			unimplemented(opcode[0]);
+		{
+			uint8_t ans = registers->b - 1;
+			cpu->flags.s = (ans & 0x80) == 0;
+			cpu->flags.z = ((ans & 0xff) == 0);
+			cpu->flags.p = (ans % 2) == 0;
+			registers->b = ans & 0xff;
 			break;
+		}
 		case 0x06: // MVI  B,d8
 			registers->b = opcode[1];
 			bytes = 2;
@@ -109,7 +121,9 @@ emulate(struct CPU *cpu) {
 			unimplemented(opcode[0]);
 			break;
 		case 0x13: // INX  D
-			unimplemented(opcode[0]);
+			registers->e++;
+			if (registers->e == 0)
+				registers->d++;
 			break;
 		case 0x14: // INR  D
 			unimplemented(opcode[0]);
@@ -165,7 +179,9 @@ emulate(struct CPU *cpu) {
 			unimplemented(opcode[0]);
 			break;
 		case 0x23: // INX  H
-			unimplemented(opcode[0]);
+			registers->l++;
+			if (registers->l == 0)
+				registers->h++;
 			break;
 		case 0x24: // INR  H
 			unimplemented(opcode[0]);
@@ -214,8 +230,12 @@ emulate(struct CPU *cpu) {
 			bytes = 3;
 			break;
 		case 0x32: // STA a16
-			unimplemented(opcode[0]);
+		{
+			uint16_t adr = (opcode[2] << 8) | opcode[1];
+			cpu->ram[adr] = registers->a;
+			bytes = 3;
 			break;
+		}
 		case 0x33: // INX  SP
 			unimplemented(opcode[0]);
 			break;
@@ -430,8 +450,11 @@ emulate(struct CPU *cpu) {
 			unimplemented(opcode[0]);
 			break;
 		case 0x77: // MOV M,A
-			unimplemented(opcode[0]);
+		{
+			uint16_t adr = (registers->h << 8) | registers->l;
+			cpu->ram[adr] = registers->a;
 			break;
+		}
 		case 0x78: // MOV A,B
 			registers->a = registers->b;
 			break;
@@ -696,7 +719,8 @@ emulate(struct CPU *cpu) {
 			unimplemented(opcode[0]);
 			break;
 		case 0xc9: // RET
-			unimplemented(opcode[0]);
+			registers->pc = cpu->ram[registers->sp] | (cpu->ram[registers->sp + 1] << 8);
+			bytes = 3;
 			break;
 		case 0xca: // JZ a16
 			if (cpu->flags.z != 1) {
