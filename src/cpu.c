@@ -449,7 +449,7 @@ emulate(struct CPU *cpu) {
 			break;
 
 		case 0x76: // HLT
-			unimplemented(opcode[0]);
+			return 1;
 			break;
 		case 0x77: // MOV M,A
 		{
