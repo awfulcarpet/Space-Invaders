@@ -32,3 +32,4 @@ struct CPU {
 
 int map(struct CPU *cpu, FILE *f);
 int emulate(struct CPU *cpu);
+void print_cpu_state(struct CPU *cpu);

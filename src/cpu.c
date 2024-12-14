@@ -3,16 +3,30 @@
 
 #include "cpu.h"
 
-void unimplemented(uint8_t opcode) {
+static void
+unimplemented(uint8_t opcode) {
 	fprintf(stderr, "unimplemented: %02x\n", opcode);
 	exit(1);
 }
 
+static void
+add(uint8_t reg, struct CPU *cpu) {
+	uint16_t ans = (uint16_t) cpu->registers.a + (uint16_t) reg;
+
+	cpu->flags.s = (ans & (0x01 << 7)) != 0;
+	cpu->flags.z = (ans & 0xff) == 0;
+	cpu->flags.p = (ans & 0xff) % 2 == 0;
+	cpu->flags.c = ans > 0xff;
+
+	cpu->registers.a = ans & 0xff;
+}
+
 int
 emulate(struct CPU *cpu) {
-	struct Registers registers = cpu->registers;
+	struct Registers *registers = &cpu->registers;
 	uint8_t *opcode = &cpu->ram[cpu->registers.pc];
 	int bytes = 1;
+
 
 	switch (*opcode) {
 		case 0x00: // NOP
@@ -210,153 +224,153 @@ emulate(struct CPU *cpu) {
 			break;
 
 		case 0x40: // MOV B,B
-			registers.b = registers.b;
+			registers->b = registers->b;
 			break;
 		case 0x41: // MOV B,C
-			registers.b = registers.c;
+			registers->b = registers->c;
 			break;
 		case 0x42: // MOV B,D
-			registers.b = registers.d;
+			registers->b = registers->d;
 			break;
 		case 0x43: // MOV B,E
-			registers.b = registers.e;
+			registers->b = registers->e;
 			break;
 		case 0x44: // MOV B,H
-			registers.b = registers.h;
+			registers->b = registers->h;
 			break;
 		case 0x45: // MOV B,L
-			registers.b = registers.l;
+			registers->b = registers->l;
 			break;
 		case 0x46: // MOV B,M
 			unimplemented(opcode[0]);
 			break;
 		case 0x47: // MOV B,A
-			registers.b = registers.a;
+			registers->b = registers->a;
 			break;
 
 		case 0x48: // MOV C,B
-			registers.c = registers.b;
+			registers->c = registers->b;
 			break;
 		case 0x49: // MOV C,C
-			registers.c = registers.c;
+			registers->c = registers->c;
 			break;
 		case 0x4a: // MOV C,D
-			registers.c = registers.d;
+			registers->c = registers->d;
 			break;
 		case 0x4b: // MOV C,E
-			registers.c = registers.e;
+			registers->c = registers->e;
 			break;
 		case 0x4c: // MOV C,H
-			registers.c = registers.h;
+			registers->c = registers->h;
 			break;
 		case 0x4d: // MOV C,L
-			registers.c = registers.l;
+			registers->c = registers->l;
 			break;
 		case 0x4e: // MOV C,M
 			unimplemented(opcode[0]);
 			break;
 		case 0x4f: // MOV C,A
-			registers.c = registers.a;
+			registers->c = registers->a;
 			break;
 
 		case 0x50: // MOV D,B
-			registers.d = registers.b;
+			registers->d = registers->b;
 			break;
 		case 0x51: // MOV D,C
-			registers.d = registers.c;
+			registers->d = registers->c;
 			break;
 		case 0x52: // MOV D,D
-			registers.d = registers.d;
+			registers->d = registers->d;
 			break;
 		case 0x53: // MOV D,E
-			registers.d = registers.e;
+			registers->d = registers->e;
 			break;
 		case 0x54: // MOV D,H
-			registers.d = registers.h;
+			registers->d = registers->h;
 			break;
 		case 0x55: // MOV D,L
-			registers.d = registers.l;
+			registers->d = registers->l;
 			break;
 		case 0x56: // MOV D,M
 			unimplemented(opcode[0]);
 			break;
 		case 0x57: // MOV D,A
-			registers.d = registers.a;
+			registers->d = registers->a;
 			break;
 
 		case 0x58: // MOV E,B
-			registers.e = registers.b;
+			registers->e = registers->b;
 			break;
 		case 0x59: // MOV E,C
-			registers.e = registers.c;
+			registers->e = registers->c;
 			break;
 		case 0x5a: // MOV E,D
-			registers.e = registers.d;
+			registers->e = registers->d;
 			break;
 		case 0x5b: // MOV E,E
-			registers.e = registers.e;
+			registers->e = registers->e;
 			break;
 		case 0x5c: // MOV E,H
-			registers.e = registers.h;
+			registers->e = registers->h;
 			break;
 		case 0x5d: // MOV E,L
-			registers.e = registers.l;
+			registers->e = registers->l;
 			break;
 		case 0x5e: // MOV E,M
 			unimplemented(opcode[0]);
 			break;
 		case 0x5f: // MOV E,A
-			registers.e = registers.a;
+			registers->e = registers->a;
 			break;
 
 		case 0x60: // MOV H,B
-			registers.h = registers.b;
+			registers->h = registers->b;
 			break;
 		case 0x61: // MOV H,C
-			registers.h = registers.c;
+			registers->h = registers->c;
 			break;
 		case 0x62: // MOV H,D
-			registers.h = registers.d;
+			registers->h = registers->d;
 			break;
 		case 0x63: // MOV H,E
-			registers.h = registers.e;
+			registers->h = registers->e;
 			break;
 		case 0x64: // MOV H,H
-			registers.h = registers.h;
+			registers->h = registers->h;
 			break;
 		case 0x65: // MOV H,L
-			registers.h = registers.l;
+			registers->h = registers->l;
 			break;
 		case 0x66: // MOV H,M
 			unimplemented(opcode[0]);
 			break;
 		case 0x67: // MOV H,A
-			registers.h = registers.a;
+			registers->h = registers->a;
 			break;
 
 		case 0x68: // MOV L,B
-			registers.l = registers.b;
+			registers->l = registers->b;
 			break;
 		case 0x69: // MOV L,C
-			registers.l = registers.c;
+			registers->l = registers->c;
 			break;
 		case 0x6a: // MOV L,D
-			registers.l = registers.d;
+			registers->l = registers->d;
 			break;
 		case 0x6b: // MOV L,E
-			registers.l = registers.e;
+			registers->l = registers->e;
 			break;
 		case 0x6c: // MOV L,H
-			registers.l = registers.h;
+			registers->l = registers->h;
 			break;
 		case 0x6d: // MOV L,L
-			registers.l = registers.l;
+			registers->l = registers->l;
 			break;
 		case 0x6e: // MOV L,M
 			unimplemented(opcode[0]);
 			break;
 		case 0x6f: // MOV L,A
-			registers.l = registers.a;
+			registers->l = registers->a;
 			break;
 
 		case 0x70: // MOV M,B
@@ -385,53 +399,56 @@ emulate(struct CPU *cpu) {
 			unimplemented(opcode[0]);
 			break;
 		case 0x78: // MOV A,B
-			registers.a = registers.b;
+			registers->a = registers->b;
 			break;
 		case 0x79: // MOV A,C
-			registers.a = registers.c;
+			registers->a = registers->c;
 			break;
 		case 0x7a: // MOV A,D
-			registers.a = registers.d;
+			registers->a = registers->d;
 			break;
 		case 0x7b: // MOV A,E
-			registers.a = registers.e;
+			registers->a = registers->e;
 			break;
 		case 0x7c: // MOV A,H
-			registers.a = registers.h;
+			registers->a = registers->h;
 			break;
 		case 0x7d: // MOV A,L
-			registers.a = registers.l;
+			registers->a = registers->l;
 			break;
 		case 0x7e: // MOV A,H
-			registers.a = registers.h;
+			registers->a = registers->h;
 			break;
 		case 0x7f: // MOV A,H
-			registers.a = registers.h;
+			registers->a = registers->h;
 			break;
 
 		case 0x80: // ADD B
-			unimplemented(opcode[0]);
+			add(registers->b, cpu);
 			break;
 		case 0x81: // ADD C
-			unimplemented(opcode[0]);
+			add(registers->c, cpu);
 			break;
 		case 0x82: // ADD D
-			unimplemented(opcode[0]);
+			add(registers->d, cpu);
 			break;
 		case 0x83: // ADD E
-			unimplemented(opcode[0]);
+			add(registers->e, cpu);
 			break;
 		case 0x84: // ADD H
-			unimplemented(opcode[0]);
+			add(registers->h, cpu);
 			break;
 		case 0x85: // ADD L
-			unimplemented(opcode[0]);
+			add(registers->l, cpu);
 			break;
 		case 0x86: // ADD M
-			unimplemented(opcode[0]);
+		{
+			uint16_t adr = (registers->h << 8) | registers->l;
+			add(cpu->ram[adr], cpu);
 			break;
+		}
 		case 0x87: // ADD A
-			unimplemented(opcode[0]);
+			add(registers->a, cpu);
 			break;
 
 		case 0x88: // ADC B
@@ -628,7 +645,8 @@ emulate(struct CPU *cpu) {
 			unimplemented(opcode[0]);
 			break;
 		case 0xc6: // ADI d8
-			unimplemented(opcode[0]);
+			add(opcode[1], cpu);
+			bytes = 2;
 			break;
 		case 0xc7: // RST 0
 			unimplemented(opcode[0]);
@@ -809,5 +827,30 @@ emulate(struct CPU *cpu) {
 	}
 
 	cpu->registers.pc += 1;
+
+	print_cpu_state(cpu);
 	return 1;
+}
+
+void print_cpu_state(struct CPU *cpu) {
+	struct Registers *regs = &cpu->registers;
+	struct Flags *flags = &cpu->flags;
+
+	printf("a: %08b\n", regs->a);
+	printf("b: %08b\n", regs->b);
+	printf("c: %02x\n", regs->c);
+	printf("d: %02x\n", regs->d);
+	printf("e: %02x\n", regs->e);
+	printf("h: %02x\n", regs->h);
+	printf("l: %02x\n", regs->l);
+
+	printf("SZKA-PVC\n%01x%01x%01x%01x%01x%01x%01x%01x\n",
+		cpu->flags.s,
+		cpu->flags.z,
+		cpu->flags.k,
+		cpu->flags.a,
+		0,
+		cpu->flags.p,
+		cpu->flags.v,
+		cpu->flags.c);
 }
