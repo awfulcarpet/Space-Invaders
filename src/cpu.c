@@ -89,7 +89,8 @@ emulate(struct CPU *cpu) {
 			unimplemented(opcode[0]);
 			break;
 		case 0x0e: // MVI  C,d8
-			unimplemented(opcode[0]);
+			registers->c = opcode[1];
+			bytes = 2;
 			break;
 		case 0x0f: // RRC
 			unimplemented(opcode[0]);
@@ -115,7 +116,8 @@ emulate(struct CPU *cpu) {
 			unimplemented(opcode[0]);
 			break;
 		case 0x16: // MVI  D,d8
-			unimplemented(opcode[0]);
+			registers->d = opcode[1];
+			bytes = 2;
 			break;
 		case 0x17: // RAL
 			unimplemented(opcode[0]);
@@ -139,7 +141,8 @@ emulate(struct CPU *cpu) {
 			unimplemented(opcode[0]);
 			break;
 		case 0x1e: // MVI  E,d8
-			unimplemented(opcode[0]);
+			registers->e = opcode[1];
+			bytes = 2;
 			break;
 		case 0x1f: // RAR
 			unimplemented(opcode[0]);
@@ -166,7 +169,8 @@ emulate(struct CPU *cpu) {
 			unimplemented(opcode[0]);
 			break;
 		case 0x26: // MVI  H,d8
-			unimplemented(opcode[0]);
+			registers->h = opcode[1];
+			bytes = 2;
 			break;
 		case 0x27: // DAA
 			unimplemented(opcode[0]);
@@ -190,7 +194,8 @@ emulate(struct CPU *cpu) {
 			unimplemented(opcode[0]);
 			break;
 		case 0x2e: // MVI  L,d8
-			unimplemented(opcode[0]);
+			registers->l = opcode[1];
+			bytes = 2;
 			break;
 		case 0x2f: // CMA
 			unimplemented(opcode[0]);
@@ -240,7 +245,8 @@ emulate(struct CPU *cpu) {
 			unimplemented(opcode[0]);
 			break;
 		case 0x3e: // MVI  A,d8
-			unimplemented(opcode[0]);
+			registers->a = opcode[1];
+			bytes = 2;
 			break;
 		case 0x3f: // CMC
 			unimplemented(opcode[0]);
