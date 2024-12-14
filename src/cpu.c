@@ -131,8 +131,11 @@ emulate(struct CPU *cpu) {
 			unimplemented(opcode[0]);
 			break;
 		case 0x1a: // LDAX D
-			unimplemented(opcode[0]);
+		{
+			uint16_t adr = (registers->d << 8) | registers->c;
+			registers->a = cpu->ram[adr];
 			break;
+		}
 		case 0x1b: // DCX  D
 			unimplemented(opcode[0]);
 			break;
