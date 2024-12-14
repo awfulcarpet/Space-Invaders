@@ -18,8 +18,7 @@ $(OUTDIR)/%.o: src/%.c
 	$(CC) -c $(CFLAGS) -o $@ $<
 
 $(NAME): $(OBJ)
-	@echo "linking"
-	@$(CC) -o $(OUTDIR)/$@$(EXT) $^ $(LDLIBS) $(LDFLAGS)
+	$(CC) -o $(OUTDIR)/$@$(EXT) $^ $(LDLIBS) $(LDFLAGS)
 
 release: $(NAME)
 	strip $(OUTDIR)/$(NAME)
