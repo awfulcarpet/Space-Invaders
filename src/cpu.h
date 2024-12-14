@@ -1,6 +1,14 @@
 #include <stdint.h>
 #include <stdio.h>
 
+enum FLAGS {
+	CARRY = 0x01,
+	PARITY = 0x01 << 2,
+	ZERO = 0x01 << 6,
+	SIGN = 0x01 << 7,
+	ALL = CARRY | PARITY | ZERO | SIGN,
+};
+
 struct Flags {
 	uint8_t c:1;
 	uint8_t v:1;

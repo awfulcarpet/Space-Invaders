@@ -28,20 +28,23 @@ unimplemented(uint8_t opcode) {
 }
 
 static void
-set_flags(struct CPU *cpu, uint16_t num) {
-	cpu->flags.s = (num & (0x01 << 7)) != 0;
-	cpu->flags.z = (num & 0xff) == 0;
-	cpu->flags.p = (num & 0xff) % 2 == 0;
-	cpu->flags.c = num > 0xff;
-
-	cpu->registers.a = num & 0xff;
+set_flags(struct CPU *cpu, uint16_t num, uint8_t flags) {
+	if (flags & SIGN)
+		cpu->flags.s = (num & (0x01 << 7)) == 1;
+	if (flags & ZERO)
+		cpu->flags.z = (num & 0xff) == 0;
+	if (flags & PARITY)
+		cpu->flags.p = (num & 0xff) % 2 == 0;
+	if (flags & CARRY)
+		cpu->flags.c = num > 0xff;
 }
 
 static void
 add(uint8_t reg, struct CPU *cpu) {
 	uint16_t ans = (uint16_t) cpu->registers.a + (uint16_t) reg;
 
-	set_flags(cpu, ans);
+	set_flags(cpu, ans, SIGN);
+	cpu->registers.a = ans & 0xff;
 }
 
 int
@@ -71,9 +74,7 @@ emulate(struct CPU *cpu) {
 		case 0x05: // DCR  B
 		{
 			uint8_t ans = registers->b - 1;
-			cpu->flags.s = (ans & 0x80) == 0;
-			cpu->flags.z = ((ans & 0xff) == 0);
-			cpu->flags.p = (ans % 2) == 0;
+			set_flags(cpu, ans, SIGN | ZERO | PARITY);
 			registers->b = ans & 0xff;
 			break;
 		}
