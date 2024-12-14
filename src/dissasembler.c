@@ -301,6 +301,7 @@ main(void) {
 
 	if (f == NULL) {
 		perror("failed to open rom");
+		return 1;
 	}
 
 	fseek(f, 0, SEEK_END);

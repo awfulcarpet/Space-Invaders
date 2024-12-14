@@ -64,7 +64,8 @@ emulate(struct CPU *cpu) {
 			unimplemented(opcode[0]);
 			break;
 		case 0x06: // MVI  B,d8
-			unimplemented(opcode[0]);
+			registers->b = opcode[1];
+			bytes = 2;
 			break;
 		case 0x07: // RLC
 			unimplemented(opcode[0]);
@@ -195,7 +196,8 @@ emulate(struct CPU *cpu) {
 			break;
 
 		case 0x31: // LXI  SP d16
-			unimplemented(opcode[0]);
+			registers->sp = (opcode[2] << 8) | opcode[1];
+			bytes = 3;
 			break;
 		case 0x32: // STA a16
 			unimplemented(opcode[0]);
@@ -650,10 +652,17 @@ emulate(struct CPU *cpu) {
 			unimplemented(opcode[0]);
 			break;
 		case 0xc2: // JNZ a16
-			unimplemented(opcode[0]);
+			if (cpu->flags.z) {
+				bytes = 3;
+				break;
+			}
+
+			registers->pc = (opcode[2] << 8) | opcode[1];
+			bytes = 0;
 			break;
 		case 0xc3: // JMP a16
-			unimplemented(opcode[0]);
+			registers->pc = (opcode[2] << 8) | opcode[1];
+			bytes = 0; // don't skip the line we jumped to
 			break;
 		case 0xc4: // CNZ a16
 			unimplemented(opcode[0]);
@@ -675,7 +684,13 @@ emulate(struct CPU *cpu) {
 			unimplemented(opcode[0]);
 			break;
 		case 0xca: // JZ a16
-			unimplemented(opcode[0]);
+			if (cpu->flags.z != 1) {
+				bytes = 3;
+				break;
+			}
+
+			registers->pc = (opcode[2] << 8) | opcode[1];
+			bytes = 0;
 			break;
 		case 0xcb: // 0xcb ILLEGAL
 			unimplemented(opcode[0]);
@@ -700,7 +715,13 @@ emulate(struct CPU *cpu) {
 			unimplemented(opcode[0]);
 			break;
 		case 0xd2: // JNC a16
-			unimplemented(opcode[0]);
+			if (cpu->flags.c) {
+				bytes = 3;
+				break;
+			}
+
+			registers->pc = (opcode[2] << 8) | opcode[1];
+			bytes = 0;
 			break;
 		case 0xd3: // OUT d8
 			unimplemented(opcode[0]);
@@ -725,7 +746,13 @@ emulate(struct CPU *cpu) {
 			break;
 
 		case 0xda: // JC a16
-			unimplemented(opcode[0]);
+			if (!cpu->flags.c) {
+				bytes = 3;
+				break;
+			}
+
+			registers->pc = (opcode[2] << 8) | opcode[1];
+			bytes = 0;
 			break;
 		case 0xdb: // IN d8
 			unimplemented(opcode[0]);
@@ -750,7 +777,13 @@ emulate(struct CPU *cpu) {
 			unimplemented(opcode[0]);
 			break;
 		case 0xe2: // JPO a16
-			unimplemented(opcode[0]);
+			if (cpu->flags.p == 1) {
+				bytes = 3;
+				break;
+			}
+
+			registers->pc = (opcode[2] << 8) | opcode[1];
+			bytes = 0;
 			break;
 		case 0xe3: // XTHL
 			unimplemented(opcode[0]);
@@ -774,7 +807,13 @@ emulate(struct CPU *cpu) {
 			unimplemented(opcode[0]);
 			break;
 		case 0xea: // JPE a16
-			unimplemented(opcode[0]);
+			if (cpu->flags.p == 0) {
+				bytes = 3;
+				break;
+			}
+
+			registers->pc = (opcode[2] << 8) | opcode[1];
+			bytes = 0;
 			break;
 		case 0xeb: // XCHG
 			unimplemented(opcode[0]);
@@ -799,7 +838,12 @@ emulate(struct CPU *cpu) {
 			unimplemented(opcode[0]);
 			break;
 		case 0xf2: // JP a16
-			unimplemented(opcode[0]);
+			if (cpu->flags.s == 1) {
+				bytes = 3;
+				break;
+			}
+			registers->pc = (opcode[2] << 8) | opcode[1];
+			bytes = 3;
 			break;
 		case 0xf3: // DI
 			unimplemented(opcode[0]);
@@ -823,7 +867,12 @@ emulate(struct CPU *cpu) {
 			unimplemented(opcode[0]);
 			break;
 		case 0xfa: // JM a16
-			unimplemented(opcode[0]);
+			if (cpu->flags.s == 0) {
+				bytes = 3;
+				break;
+			}
+			registers->pc = (opcode[2] << 8) | opcode[1];
+			bytes = 3;
 			break;
 		case 0xfb: // EI
 			unimplemented(opcode[0]);
@@ -843,7 +892,7 @@ emulate(struct CPU *cpu) {
 			break;
 	}
 
-	cpu->registers.pc += 1;
+	cpu->registers.pc += bytes;
 
 	print_cpu_state(cpu);
 	return 0;
@@ -853,13 +902,16 @@ void print_cpu_state(struct CPU *cpu) {
 	struct Registers *regs = &cpu->registers;
 	struct Flags *flags = &cpu->flags;
 
-	printf("a: %08b\n", regs->a);
-	printf("b: %08b\n", regs->b);
-	printf("c: %02x\n", regs->c);
-	printf("d: %02x\n", regs->d);
-	printf("e: %02x\n", regs->e);
-	printf("h: %02x\n", regs->h);
-	printf("l: %02x\n", regs->l);
+	printf("->%02x\n", cpu->ram[regs->pc]);
+	printf("a:  %02x\n", regs->a);
+	printf("b:  %02x\n", regs->b);
+	printf("c:  %02x\n", regs->c);
+	printf("d:  %02x\n", regs->d);
+	printf("e:  %02x\n", regs->e);
+	printf("h:  %02x\n", regs->h);
+	printf("l:  %02x\n", regs->l);
+	printf("pc: %02x\n", regs->pc);
+	printf("sp: %02x\n", regs->sp);
 
 	printf("SZKA-PVC\n%01x%01x%01x%01x%01x%01x%01x%01x\n",
 		cpu->flags.s,
@@ -870,4 +922,6 @@ void print_cpu_state(struct CPU *cpu) {
 		cpu->flags.p,
 		cpu->flags.v,
 		cpu->flags.c);
+
+	printf("\n");
 }

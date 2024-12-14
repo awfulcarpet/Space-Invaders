@@ -9,6 +9,7 @@ main(void) {
 	if (map(&cpu, f)) return 1;
 	fclose(f);
 
+	print_cpu_state(&cpu);
 	while (!emulate(&cpu));
 
 	return 0;
