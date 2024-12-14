@@ -3,7 +3,8 @@
 
 int
 main(void) {
-	struct CPU cpu = {0};
+	struct CPU cpu;
+	cpu.registers.pc = 0;
 
 	FILE *f = fopen("space-invaders.rom", "r");
 	if (map(&cpu, f)) return 1;

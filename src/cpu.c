@@ -700,8 +700,15 @@ emulate(struct CPU *cpu) {
 			unimplemented(opcode[0]);
 			break;
 		case 0xcd: // CALL a16
-			unimplemented(opcode[0]);
+		{
+			uint16_t adr = registers->pc + 3;
+			cpu->ram[registers->sp-1] = (adr >> 8) & 0xff;
+			cpu->ram[registers->sp-2] = adr & 0xff;
+			registers->sp -= 2;
+			registers->pc = (opcode[2] << 8) | opcode[1];
+			bytes = 0;
 			break;
+		}
 		case 0xce: // ACI d8
 			unimplemented(opcode[0]);
 			break;
@@ -910,8 +917,8 @@ void print_cpu_state(struct CPU *cpu) {
 	printf("e:  %02x\n", regs->e);
 	printf("h:  %02x\n", regs->h);
 	printf("l:  %02x\n", regs->l);
-	printf("pc: %02x\n", regs->pc);
-	printf("sp: %02x\n", regs->sp);
+	printf("pc: %04x\n", regs->pc);
+	printf("sp: %04x\n", regs->sp);
 
 	printf("SZKA-PVC\n%01x%01x%01x%01x%01x%01x%01x%01x\n",
 		cpu->flags.s,
