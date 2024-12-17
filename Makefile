@@ -1,5 +1,14 @@
 WARNING = -Wall -Wextra -Wpedantic -Wno-unused-result -Wno-all
 CFLAGS = -std=c99 -O2 $(WARNING) -pipe -ggdb -Iinclude -I/usr/local/include
+LDLIBS = -lraylib -lGL -lm -lX11 -lpthread -ldl -lrt
+EMCCFLAGS = lib/libraylib.a -s USE_GLFW=3 --shell-file minshell.html -s ASYNCIFY
+PLATFORM ?= PLATFORM_DESKTOP
+
+ifeq ($(PLATFORM),WEB)
+	CC=emcc
+	LDLIBS = $(EMCCFLAGS)
+	EXT = .html
+endif
 
 # LDFLAGS = -static
 PREFIX = /usr/local/bin
@@ -9,6 +18,7 @@ OBJ = \
       $(OUTDIR)/main.o \
 	  $(OUTDIR)/cpu.o \
 	  $(OUTDIR)/dissasembler.o \
+	  $(OUTDIR)/machine.o \
 
 all: $(NAME)
 

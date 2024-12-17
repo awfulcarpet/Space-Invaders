@@ -4,6 +4,7 @@
 
 #include "cpu.h"
 #include "dissasemble.h"
+#include "machine.h"
 
 int
 map(struct CPU *cpu, FILE *f) {
@@ -55,8 +56,8 @@ emulate(struct CPU *cpu) {
 	uint8_t *opcode = &cpu->ram[cpu->registers.pc];
 	int bytes = 1;
 
-	get_opcode_bytelen(cpu->ram, registers->pc);
-	print_cpu_state(cpu);
+	/*get_opcode_bytelen(cpu->ram, registers->pc);*/
+	/*print_cpu_state(cpu);*/
 
 	switch (*opcode) {
 		case 0x00: // NOP
@@ -939,8 +940,13 @@ emulate(struct CPU *cpu) {
 			break;
 		// TODO: Reimplement later
 		case 0xd3: // OUT d8
-			bytes = 2;
+		{
+			unimplemented(opcode[0]);
+			/*uint8_t port = opcode[1];*/
+			/*registers->a = machineIN(cpu, port);*/
+			/*bytes = 2;*/
 			break;
+		}
 		case 0xd4: // CNC a16
 			unimplemented(opcode[0]);
 			break;
@@ -982,9 +988,13 @@ emulate(struct CPU *cpu) {
 			break;
 		// TODO: Reimplement later
 		case 0xdb: // IN d8
+		{
 			unimplemented(opcode[0]);
-			bytes = 2;
+			/*uint8_t port = opcode[1];*/
+			/*registers->a = machineOUT(cpu, port);*/
+			/*bytes = 2;*/
 			break;
+		}
 		case 0xdc: // CC a16
 			unimplemented(opcode[0]);
 			break;
