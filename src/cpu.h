@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdbool.h>
 #include <stdio.h>
 
 enum FLAGS {
@@ -36,6 +37,7 @@ struct CPU {
 	struct Flags flags;
 	struct Registers registers;
 	uint8_t *ram; // little endian
+	bool interrupts;
 };
 
 int map(struct CPU *cpu, FILE *f);

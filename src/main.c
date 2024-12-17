@@ -3,14 +3,13 @@
 
 int
 main(void) {
-	struct CPU cpu;
+	struct CPU cpu = {0};
 	cpu.registers.pc = 0;
 
 	FILE *f = fopen("space-invaders.rom", "r");
 	if (map(&cpu, f)) return 1;
 	fclose(f);
 
-	print_cpu_state(&cpu);
 	while (!emulate(&cpu));
 
 	return 0;

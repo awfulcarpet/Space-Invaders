@@ -294,28 +294,27 @@ get_opcode_bytelen(unsigned char *buf, int pc)
 	printf("\n");
 	return bytes;
 }
+/* int */
+/* main(void) { */
+/* 	FILE *f = fopen("space-invaders.rom", "r"); */
 
-int
-main(void) {
-	FILE *f = fopen("space-invaders.rom", "r");
+/* 	if (f == NULL) { */
+/* 		perror("failed to open rom"); */
+/* 		return 1; */
+/* 	} */
 
-	if (f == NULL) {
-		perror("failed to open rom");
-		return 1;
-	}
+/* 	fseek(f, 0, SEEK_END); */
+/* 	long len = ftell(f); */
+/* 	fseek(f, 0, SEEK_SET); */
 
-	fseek(f, 0, SEEK_END);
-	long len = ftell(f);
-	fseek(f, 0, SEEK_SET);
+/* 	unsigned char *buf = malloc(len); */
+/* 	fread(buf, sizeof(unsigned char), len, f); */
+/* 	fclose(f); */
+/* 	int pc = 0; */
 
-	unsigned char *buf = malloc(len);
-	fread(buf, sizeof(unsigned char), len, f);
-	fclose(f);
-	int pc = 0;
+/* 	while (pc < len) { */
+/* 		pc += get_opcode_bytelen(buf, pc); */
+/* 	} */
 
-	while (pc < len) {
-		pc += get_opcode_bytelen(buf, pc);
-	}
-
-	return 0;
-}
+/* 	return 0; */
+/* } */
