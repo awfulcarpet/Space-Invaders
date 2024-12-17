@@ -12,7 +12,7 @@ main(void) {
 	struct Machine cabinet = {0};
 	struct CPU *cpu = &cabinet.cpu;
 
-	cabinet.ports[0] = 0b01110000;
+	cabinet.ports[0] = 0b00001110;
 	cabinet.ports[1] = 0b00010000;
 
 	FILE *f = fopen("space-invaders.rom", "r");
@@ -26,6 +26,9 @@ main(void) {
 			break;
 		}
 
+		setKeys(&cabinet);
+
+		printf("%08b\n", cabinet.ports[0]);
 		uint8_t *opcode = &cpu->ram[cpu->registers.pc];
 
 		if (opcode[0] == 0xdb) { // IN d8
