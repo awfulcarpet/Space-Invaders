@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdio.h>
 #include "raylib.h"
 
 #include "cpu.h"
@@ -8,16 +9,20 @@ struct Machine cabinet = {0};
 
 int
 main(void) {
+
 	InitWindow(256, 254, "Space Invaders Emulated");
+
 	struct Machine cabinet = {0};
 	struct CPU *cpu = &cabinet.cpu;
 
 	cabinet.ports[0] = 0b00001110;
 	cabinet.ports[1] = 0b00010000;
 
-	FILE *f = fopen("space-invaders.rom", "r");
-	if (map(cpu, f)) return 1;
-	fclose(f);
+	/*FILE *f = fopen("space-invaders.rom", "r");*/
+	int len = 0;
+	cpu->ram = LoadFileData("space-invaders.rom", &len);
+	/*if (map(cpu, f)) return 1;*/
+	/*fclose(f);*/
 
 
 	int run = 0;
@@ -45,6 +50,8 @@ main(void) {
 		run = emulate(cpu);
 
 		BeginDrawing();
+		ClearBackground(WHITE);
+			DrawText(TextFormat("%02x\n", cpu->ram[0x32]), 0, 0, 32, BLACK);
 		EndDrawing();
 	}
 
