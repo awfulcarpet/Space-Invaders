@@ -56,16 +56,19 @@ void
 run_machine(struct Machine *machine) {
 	int cycles = 0;
 	machine->last_interrupt = 1;
+	double now = getmsec();
 
+	machine->next_interrupt = now + 16000.0;
 	while (1) {
+		now = getmsec();
 		unsigned char *op = &machine->cpu.ram[machine->cpu.pc];
 		if (*op == 0xdb) { // IN
-			printf("inputting\n");
+			printf("inputting %d\n", op[1]);
 			machine->cpu.a = machineIN(machine, op[1]);
 			machine->cpu.pc += 2;
 			cycles += 3;
 		} else if (*op == 0xd3) { // OUT
-			printf("outputting\n");
+			printf("outputting %d\n", op[1]);
 			machineOUT(machine, op[1]);
 			machine->cpu.pc += 2;
 			cycles += 3;
@@ -73,14 +76,17 @@ run_machine(struct Machine *machine) {
 			cycles += emulate(&machine->cpu);
 		}
 
-		if (machine->cpu.interrupts == 1) {
+		if (machine->cpu.interrupts == 1 && (now > machine->next_interrupt)) {
 			if (machine->last_interrupt == 1) {
+				printf("interrupt %d\n", 1);
 				generate_interrupt(&machine->cpu, 1);
 				machine->last_interrupt = 0;
 			} else {
+				printf("interrupt %d\n", 2);
 				generate_interrupt(&machine->cpu, 2);
 				machine->last_interrupt = 1;
 			}
+			machine->next_interrupt = now + 8000.0;
 		}
 	}
 }
