@@ -10,7 +10,7 @@ int
 machineIN(struct Machine *machine, uint8_t port) {
 	switch (port) {
 		case 3:
-			return machine->shift_val & (0xff << (15 - machine->shift_offset));
+			return (machine->shift_val >> (8 - machine->shift_offset)) & 0xff;
 			break;
 		default:
 			fprintf(stderr, "wrong port read from: %d\n", port);
@@ -22,18 +22,13 @@ machineIN(struct Machine *machine, uint8_t port) {
 
 int
 machineOUT(struct Machine *machine, uint8_t port) {
-	uint8_t a = machine->cpu.registers.a;
+	uint8_t a = machine->cpu.a;
 	switch (port) {
 		case 2:
 			machine->shift_offset = a & 0x7;
 			break;
-		case 3: // TODO: Sounds
-			break;
 		case 4:
 			machine->shift_val = (machine->shift_val >> 8) | (a << 8);
-			break;
-		case 6:
-			machine->ports[port] = 1;
 			break;
 		default:
 			fprintf(stderr, "wrong port written to: %d\n", port);

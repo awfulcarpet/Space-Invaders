@@ -8,7 +8,7 @@ struct Machine {
 	double interrupt;
 	double timer;
 
-	uint8_t ports[7];
+	/*uint8_t ports[7];*/
 	uint8_t shift_offset;
 	uint16_t shift_val;
 };
