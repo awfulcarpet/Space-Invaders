@@ -1,7 +1,9 @@
+#include <bits/types/struct_timeval.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <raylib.h>
 #include <string.h>
+#include <sys/time.h>
 
 #include "cpu.h"
 #include "machine.h"
@@ -9,6 +11,10 @@
 int
 machineIN(struct Machine *machine, uint8_t port) {
 	switch (port) {
+		case 0:
+			return 1;
+		case 1:
+			return 0;
 		case 3:
 			return (machine->shift_val >> (8 - machine->shift_offset)) & 0xff;
 			break;
@@ -87,4 +93,57 @@ draw_display(struct Machine *machine) {
 
 	UnloadTexture(texture);
 	free(buffer);
+}
+
+static double
+getmsec(void) {
+	struct timeval time;
+	gettimeofday(&time, NULL);
+
+	return (time.tv_sec * 1000000) + time.tv_usec;
+}
+
+void
+run_machine(struct Machine *machine) {
+	int cycles = 0;
+	int global_cycles = 0;
+	machine->next_interrupt = getmsec() + 16000.0;
+	machine->next_interrupt = 1;
+
+	while (1) {
+		double now = getmsec();
+
+		if (now - machine->timer > 1.0 / 60.0) {
+			if (machine->interrupt == 1) {
+				generate_interrupt(&machine->cpu, 1);
+				machine->interrupt = 2;
+			} else {
+				generate_interrupt(&machine->cpu, 2);
+				machine->interrupt = 1;
+			}
+			machine->next_interrupt = now + 8000.0;
+		}
+
+		double elapse = now - machine->timer;
+		int cycles_needed = 2 * elapse;
+
+		while (cycles < cycles_needed) {
+			printf("cycles: %d\n", cycles);
+			unsigned char *op = &machine->cpu.ram[machine->cpu.pc];
+			if (*op == 0xdb) { // IN
+				machine->cpu.a = machineIN(machine, op[1]);
+				machine->cpu.pc += 2;
+				cycles += 3;
+			} else if (*op == 0xd3) { // OUT
+				machineOUT(machine, op[1]);
+				machine->cpu.pc += 2;
+				cycles += 3;
+			} else {
+				cycles += emulate(&machine->cpu);
+			}
+			global_cycles += cycles;
+		}
+
+		machine->timer = now;
+	}
 }

@@ -16,3 +16,4 @@ struct Machine {
 int machineIN(struct Machine *machine, uint8_t port);
 int machineOUT(struct Machine *machine, uint8_t port);
 void draw_display(struct Machine *machine);
+void run_machine(struct Machine *machine);

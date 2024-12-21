@@ -27,9 +27,8 @@ main(void) {
 
 	int run = 0;
 
-	while (1) {
-		emulate(cpu);
-	}
+	run_machine(&cabinet);
+
 	/*while (!run) {*/
 		/*if (WindowShouldClose()) {*/
 		/*	break;*/
