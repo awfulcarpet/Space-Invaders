@@ -12,7 +12,7 @@ machineIN(struct Machine *machine, uint8_t port) {
 			return machine->shift_val & (0xff << (15 - machine->shift_offset));
 			break;
 		default:
-			fprintf(stderr, "wrong port written to: %d\n", port);
+			fprintf(stderr, "wrong port read from: %d\n", port);
 			abort();
 			break;
 	}
