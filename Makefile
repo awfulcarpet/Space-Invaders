@@ -1,9 +1,7 @@
 WARNING = -Wall -Wextra -Wpedantic -Wno-unused-result -Wno-all
 CFLAGS = -std=c99 -O2 $(WARNING) -pipe -ggdb -Iinclude -I/usr/local/include
 
-# LDFLAGS = -static
-PREFIX = /usr/local/bin
-NAME = dissasembler
+NAME = emulator
 OUTDIR = .build
 OBJ = \
       $(OUTDIR)/main.o \

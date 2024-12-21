@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 int
-get_opcode_bytelen(unsigned char *buf, int pc)
+get_opname(unsigned char *buf, int pc)
 {
 	int bytes = 1;
 	printf("%04x ", pc);
@@ -294,27 +294,3 @@ get_opcode_bytelen(unsigned char *buf, int pc)
 	printf("\n");
 	return bytes;
 }
-/* int */
-/* main(void) { */
-/* 	FILE *f = fopen("space-invaders.rom", "r"); */
-
-/* 	if (f == NULL) { */
-/* 		perror("failed to open rom"); */
-/* 		return 1; */
-/* 	} */
-
-/* 	fseek(f, 0, SEEK_END); */
-/* 	long len = ftell(f); */
-/* 	fseek(f, 0, SEEK_SET); */
-
-/* 	unsigned char *buf = malloc(len); */
-/* 	fread(buf, sizeof(unsigned char), len, f); */
-/* 	fclose(f); */
-/* 	int pc = 0; */
-
-/* 	while (pc < len) { */
-/* 		pc += get_opcode_bytelen(buf, pc); */
-/* 	} */
-
-/* 	return 0; */
-/* } */

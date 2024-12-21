@@ -11,7 +11,6 @@ main(void) {
 
 	int cycles = 0;
 	while (1) {
-		getchar();
 		cycles += emulate(&cpu);
 		print_cpu_state(&cpu, cycles);
 	}

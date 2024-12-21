@@ -1,1 +1,1 @@
-int get_opcode_bytelen(unsigned char *buf, int pc);
+int get_opname(unsigned char *buf, int pc);

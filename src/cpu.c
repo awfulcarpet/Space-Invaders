@@ -94,7 +94,7 @@ emulate(struct CPU *cpu) {
 	int cycles = 0;
 	uint8_t *opcode = &cpu->ram[cpu->pc];
 
-	get_opcode_bytelen(cpu->ram, cpu->pc);
+	get_opname(cpu->ram, cpu->pc);
 
 	cpu->pc++;
 	switch (*opcode) {
