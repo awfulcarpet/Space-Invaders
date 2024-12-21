@@ -15,5 +15,4 @@ struct Machine {
 
 int machineIN(struct Machine *machine, uint8_t port);
 int machineOUT(struct Machine *machine, uint8_t port);
-void setKeys(struct Machine *machine);
 void draw_display(struct Machine *machine);

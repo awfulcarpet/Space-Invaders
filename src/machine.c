@@ -88,14 +88,3 @@ draw_display(struct Machine *machine) {
 	UnloadTexture(texture);
 	free(buffer);
 }
-
-void
-setKeys(struct Machine *machine) {
-	machine->ports[0] |= IsKeyDown(KEY_SPACE) << 4;
-	machine->ports[0] |= IsKeyDown(KEY_LEFT) << 5;
-	machine->ports[0] |= IsKeyDown(KEY_RIGHT) << 6;
-
-	machine->ports[0] &= ~(IsKeyUp(KEY_SPACE) << 4);
-	machine->ports[0] &= ~(IsKeyUp(KEY_LEFT) << 5);
-	machine->ports[0] &= ~(IsKeyUp(KEY_RIGHT) << 6);
-}
