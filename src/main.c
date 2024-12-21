@@ -1,18 +1,19 @@
 #include <stdint.h>
+#include <assert.h>
 #include "cpu.h"
+#include "machine.h"
+
+struct Machine cabinet = {0};
 
 int
 main(void) {
-	struct CPU cpu = {0};
 
-	FILE *f = fopen("space-invaders.rom", "r");
-	if (map(&cpu, f)) return 1;
-	fclose(f);
+	assert(machine_init(&cabinet) == 0);
 
 	int cycles = 0;
 	while (1) {
-		cycles += emulate(&cpu);
-		print_cpu_state(&cpu, cycles);
+		cycles += emulate(cabinet.cpu);
+		print_cpu_state(cabinet.cpu, cycles);
 	}
 
 	return 0;

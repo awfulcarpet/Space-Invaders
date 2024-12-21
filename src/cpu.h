@@ -34,6 +34,8 @@ struct CPU {
 	struct Flags flags;
 	uint8_t *ram; // little endian
 	bool interrupts;
+
+	uint8_t *ports[7]; // pointers to ports
 };
 
 int map(struct CPU *cpu, FILE *f);

@@ -6,6 +6,7 @@ OUTDIR = .build
 OBJ = \
       $(OUTDIR)/main.o \
 	  $(OUTDIR)/cpu.o \
+	  $(OUTDIR)/machine.o \
 	  $(OUTDIR)/dissasembler.o \
 
 all: $(NAME)
