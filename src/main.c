@@ -18,9 +18,6 @@ main(void) {
 	struct Machine cabinet = {0};
 	struct CPU *cpu = &cabinet.cpu;
 
-	/*cabinet.ports[0] = 0b00001110;*/
-	/*cabinet.ports[1] = 0b00010000;*/
-
 	FILE *f = fopen("space-invaders.rom", "r");
 	/*int len = 0;*/
 	/*cpu->ram = LoadFileData("space-invaders.rom", &len);*/

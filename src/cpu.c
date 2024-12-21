@@ -55,26 +55,6 @@ set_flags(struct CPU *cpu, uint16_t num, int size, uint8_t flags) {
 		cpu->flags.c = (num & 0xff00) > 0;
 }
 
-/*static void*/
-/*add(uint8_t reg, struct CPU *cpu) {*/
-/*	uint16_t ans = (uint16_t) cpu->registers.a + (uint16_t) reg;*/
-/**/
-/*	set_flags(cpu, ans, SIGN);*/
-/*	cpu->registers.a = ans & 0xff;*/
-/*}*/
-
-/*void*/
-/*generate_interrupt(struct CPU *cpu, int interrupt)*/
-/*{*/
-/*	cpu->ram[cpu->registers.sp - 1] = (cpu->registers.pc & 0xFF00) >> 8;*/
-/*	cpu->ram[cpu->registers.sp - 2] = cpu->registers.pc & 0x00FF;*/
-/*	cpu->registers.sp -= 2;*/
-/**/
-/*	cpu->registers.pc = 8 * interrupt;*/
-/**/
-/*	cpu->interrupts = 0;*/
-/*}*/
-
 static void
 push(struct CPU *cpu, uint16_t num) {
 	cpu->ram[cpu->sp - 1] = (num >> 8) & 0xff;
@@ -82,12 +62,20 @@ push(struct CPU *cpu, uint16_t num) {
 
 	cpu->sp -= 2;
 }
+
 static uint16_t
 pop(struct CPU *cpu) {
 	uint16_t adr = (cpu->ram[cpu->sp + 1] << 8) | cpu->ram[cpu->sp];
 	cpu->sp += 2;
 	return adr;
 }
+
+void
+generate_interrupt(struct CPU *cpu, int interrupt) {
+	push(cpu, cpu->pc);
+	cpu->pc = 8 * interrupt;
+}
+
 
 int
 emulate(struct CPU *cpu) {
