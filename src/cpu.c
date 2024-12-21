@@ -100,6 +100,19 @@ unsigned char cycles8080[] = {
 	11, 10, 10, 4, 17, 11, 7, 11, 11, 5, 10, 4, 17, 17, 7, 11,
 };
 
+void flagsZSP(uint16_t value, struct CPU *state)
+{
+    // Handle status flags of every other operation
+    state->flags.z = (value == 0);
+    state->flags.s = (0x80 == (value & 0x80));
+    state->flags.p = parity(value, 8);
+}
+void flagsL(struct CPU *state)
+{
+    // Handle the status flags for logical operations
+    flagsZSP(state->a, state);
+    state->flags.c = 0;
+}
 
 int
 emulate(struct CPU *cpu) {
@@ -128,9 +141,11 @@ emulate(struct CPU *cpu) {
 			break;
 		case 0x05: // DCR  B
 		{
-			uint8_t ans = cpu->b - 1;
-			set_flags(cpu, ans, 8, SIGN | ZERO | PARITY);
-			cpu->b = ans & 0xff;
+			/*uint8_t ans = cpu->b - 1;*/
+			/*set_flags(cpu, ans, 8, SIGN | ZERO | PARITY);*/
+			/*cpu->b = ans & 0xff;*/
+			cpu->b--;
+			flagsZSP(cpu->b, cpu);
 			break;
 		}
 		case 0x06: // MVI  B,d8
@@ -149,9 +164,10 @@ emulate(struct CPU *cpu) {
 			uint16_t add = (cpu->b << 8) | cpu->c;
 
 			uint16_t res = hl + add;
-			cpu->h = (res & 0xff00) >> 8;
+			cpu->h = res >> 8;
 			cpu->l = res & 0xff;
-			set_flags(cpu, res, 8, CARRY);
+			/*set_flags(cpu, res, 8, CARRY);*/
+				cpu->flags.c = (res >> 16) & 1;
 			break;
 		}
 		case 0x0a: // LDAX B
@@ -169,9 +185,12 @@ emulate(struct CPU *cpu) {
 			break;
 		case 0x0d: // DCR  C
 		{
-			uint8_t ans = cpu->c - 1;
-			set_flags(cpu, ans, 8, SIGN | ZERO | PARITY);
-			cpu->c = ans & 0xff;
+			/*uint8_t ans = cpu->c - 1;*/
+			/*set_flags(cpu, ans, 8, SIGN | ZERO | PARITY);*/
+			/*cpu->c = ans & 0xff;*/
+
+			cpu->c--;
+			flagsZSP(cpu->c, cpu);
 			break;
 		}
 		case 0x0e: // MVI  C,d8
@@ -180,10 +199,13 @@ emulate(struct CPU *cpu) {
 			break;
 		case 0x0f: // RRC
 		{
-			uint8_t tmp = cpu->a;
-			cpu->a = cpu->a >> 1;
-			cpu->a = cpu->a | ((tmp & 1) << 7);
-			cpu->flags.c = (tmp & 1) == 1;
+			/*uint8_t tmp = cpu->a;*/
+			/*cpu->a = cpu->a >> 1;*/
+			/*cpu->a = cpu->a | ((tmp & 1) << 7);*/
+			/*cpu->flags.c = (tmp & 1) == 1;*/
+            uint8_t x = cpu->a;
+            cpu->a = ((x & 1) << 7) | (x >> 1);
+            cpu->flags.c = (1 == (x & 1));
 			break;
 		}
 		case 0x10: // 0x10 ILLEGAL
@@ -225,10 +247,11 @@ emulate(struct CPU *cpu) {
 			uint16_t add = (cpu->d << 8) | cpu->e;
 
 			uint16_t res = hl + add;
-			cpu->h = (res & 0xff00) >> 8;
+			cpu->h = res >> 8;
 			cpu->l = res & 0xff;
+			cpu->flags.c = (res >> 16) & 1;
 
-			set_flags(cpu, res, 8, CARRY);
+			/*set_flags(cpu, res, 8, CARRY);*/
 			break;
 		}
 		case 0x1a: // LDAX D
@@ -287,6 +310,7 @@ emulate(struct CPU *cpu) {
 		case 0x28: // 0x28 ILLEGAL
 			unimplemented(opcode[0]);
 			break;
+			// TODO: Fix?
 		case 0x29: // DAD  H
 		{
 			uint16_t hl = (cpu->h << 8) | cpu->l;
@@ -296,7 +320,8 @@ emulate(struct CPU *cpu) {
 			cpu->h = (res & 0xff00) >> 8;
 			cpu->l = res & 0xff;
 
-			set_flags(cpu, res, 8, CARRY);
+			cpu->flags.c = (res >> 16) & 1;
+			/*set_flags(cpu, res, 8, CARRY);*/
 			break;
 		}
 		case 0x2a: // LHLD a16
@@ -345,8 +370,10 @@ emulate(struct CPU *cpu) {
 		{
 			uint8_t adr = (cpu->h << 8) | cpu->l;
 			uint8_t ans = cpu->ram[adr] - 1;
-			set_flags(cpu, ans, 8, SIGN | ZERO | PARITY);
-			cpu->ram[adr] = ans & 0xff;
+			cpu->ram[adr] = cpu->ram[adr] - 1;
+			/*set_flags(cpu, ans, 8, SIGN | ZERO | PARITY);*/
+            flagsZSP(cpu->ram[adr], cpu);
+			/*cpu->ram[adr] = ans & 0xff;*/
 			break;
 		}
 		case 0x36: // MVI  M,d8
@@ -778,8 +805,9 @@ emulate(struct CPU *cpu) {
 			break;
 		case 0xa7: // ANA A
 			cpu->a &= cpu->a;
-			set_flags(cpu, cpu->a, 8, SIGN | ZERO | PARITY);
-			cpu->flags.c = 0;
+			flagsL(cpu);
+			/*set_flags(cpu, cpu->a, 8, SIGN | ZERO | PARITY);*/
+			/*cpu->flags.c = 0;*/
 			break;
 
 		case 0xa8: // XRA B
@@ -806,7 +834,7 @@ emulate(struct CPU *cpu) {
 		case 0xaf: // XRA A
 			cpu->a ^= cpu->a;
 			// set_flags(cpu, cpu->a, SIGN | ZERO | PARITY);
-			cpu->flags.c = 0;
+			flagsL(cpu);
 			break;
 
 		case 0xb0: // ORA B
@@ -862,6 +890,7 @@ emulate(struct CPU *cpu) {
 		case 0xc0: // RNZ
 			unimplemented(opcode[0]);
 			break;
+			// TODO: Fix?
 		case 0xc1: // POP B
 		{
 			uint16_t popped = pop(cpu);
@@ -889,9 +918,11 @@ emulate(struct CPU *cpu) {
 		case 0xc6: // ADI d8
 		{
 			uint16_t res = cpu->a + opcode[1];
-			set_flags(cpu, res, 8, ZERO | PARITY | SIGN | CARRY);
+			flagsZSP(res & 0xff, cpu);
+			/*set_flags(cpu, res, 8, ZERO | PARITY | SIGN | CARRY);*/
+				cpu->flags.c = res > 0xff;
 
-			cpu->a = res & 0xff;
+			cpu->a += opcode[1];
 			cpu->pc++;
 			break;
 		}
@@ -982,7 +1013,7 @@ emulate(struct CPU *cpu) {
 		// TODO: Reimplement later
 		case 0xd3: // OUT d8
 		{
-			/*unimplemented(opcode[0]);*/
+			unimplemented(opcode[0]);
 			/*unimplemented(opcode[0]);*/
 			/*uint8_t port = opcode[1];*/
 			/*cpu->a = machineIN(cpu, port);*/
@@ -1086,8 +1117,9 @@ emulate(struct CPU *cpu) {
 			break;
 		case 0xe6: // ANI d8
 			cpu->a &= opcode[1];
-			set_flags(cpu, cpu->a, 8, SIGN | ZERO | PARITY);
-			cpu->flags.c = 0;
+			flagsL(cpu);
+			/*set_flags(cpu, cpu->a, 8, SIGN | ZERO | PARITY);*/
+			/*cpu->flags.c = 0;*/
 			cpu->pc++;
 			break;
 		case 0xe7: // RST 4
@@ -1228,8 +1260,9 @@ emulate(struct CPU *cpu) {
 		case 0xfe: // CPI d8
 		{
 			uint8_t res = cpu->a - opcode[1];
-			set_flags(cpu, res, 8, SIGN | ZERO | PARITY);
-			cpu->flags.c = (cpu->a < opcode[1]);
+				flagsZSP(res & 0xff, cpu);
+			/*set_flags(cpu, res, 8, SIGN | ZERO | PARITY);*/
+			cpu->flags.c = res >> 8;
 			cpu->pc++;
 			break;
 		}

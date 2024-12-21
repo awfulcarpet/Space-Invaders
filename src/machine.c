@@ -1,3 +1,6 @@
+#include <SDL2/SDL_surface.h>
+#include <SDL2/SDL_video.h>
+#include <SDL2/SDL.h>
 #include <bits/types/struct_timeval.h>
 #include <raylib.h>
 #include <unistd.h>
@@ -17,8 +20,12 @@ machineIN(struct Machine *machine, uint8_t port) {
 		case 1:
 			return 0;
 		case 3:
-			return (machine->shift_val >> (8 - machine->shift_offset)) & 0xff;
+			/*return (machine->shift_val >> (8 - machine->shift_offset)) & 0xff;*/
+			{
+        uint16_t v = (machine->shift1 << 8) | machine->shift0;
+        return ((v >> (8 - machine->shift_offset)) & 0xff);
 			break;
+			}
 		default:
 			/*fprintf(stderr, "wrong port read from: %d\n", port);*/
 			/*abort();*/
@@ -35,7 +42,8 @@ machineOUT(struct Machine *machine, uint8_t port) {
 			machine->shift_offset = a & 0x7;
 			break;
 		case 4:
-			machine->shift_val = (machine->shift_val >> 8) | (a << 8);
+			machine->shift0 = machine->shift1;
+			machine->shift1 = a;
 			break;
 		default:
 			/*fprintf(stderr, "wrong port written to: %d\n", port);*/
@@ -54,37 +62,56 @@ getmsec(void) {
 }
 
 void
-draw_display(struct Machine *machine) {
-	unsigned char *buf = &machine->cpu.ram[0x2400];
+draw_display(struct Machine *machine, SDL_Surface *surface, SDL_Window *window) {
+	/*unsigned char *buf = &machine->cpu.ram[0x2400];*/
 	int id = 0;
-	printf("drawing\n");
-	BeginDrawing();
-	for (int i = 0; i < 224; i++) {
-		for (int j = 255; j > 0; j -= 8) {
-			for (int p = 0; p < 8; p++) {
-				int idx = (j - p) * 224 + 255;
-				if (buf[id] & (1 << p)) {
-					DrawPixel(i, j - p, WHITE);
-				} else {
-					DrawPixel(i, j - p, BLACK);
-				}
-			}
-			id++;
-		}
-	}
-	EndDrawing();
+    uint32_t *pix = surface->pixels;
+	struct CPU *cpu = &machine->cpu;
+
+
+    int i = 0x2400; // Start of Video RAM
+    FILE *f = fopen("mem", "w");
+    fwrite(&cpu->ram[i], 1, 256 * 224, f);
+    fclose(f);
+
+    for (int col = 0; col < 224; col++)
+    {
+        for (int row = 256-1; row > 0; row -= 8)
+        {
+            for (int j = 0; j < 8; j++)
+            {
+                int idx = (row - j) * 224 + col;
+
+                if (cpu->ram[i] & 1 << j)
+                {
+                    pix[idx] = 0xFFFFFF;
+                }
+                else
+                {
+                    pix[idx] = 0x000000;
+                }
+            }
+
+            i++;
+        }
+    }
+
+
+    if (SDL_UpdateWindowSurface(window))
+    {
+        puts(SDL_GetError());
+    }
 }
 
 void
-run_machine(struct Machine *machine) {
+run_machine(struct Machine *machine, SDL_Surface *surface, SDL_Window *window) {
 	int cycles = 0;
 	machine->last_interrupt = 1;
 	double now = getmsec();
 	machine->timer = now;
 	machine->next_interrupt = now + 16000.0;
-	while (!WindowShouldClose()) {
+	while (1) {
 		now = getmsec();
-		draw_display(machine);
 
 		while (cycles < 17066) {
 			unsigned char *op = &machine->cpu.ram[machine->cpu.pc];
@@ -103,11 +130,12 @@ run_machine(struct Machine *machine) {
 			}
 		}
 
-		if (machine->cpu.interrupts == 1 && (now > machine->next_interrupt)) {
+		if (machine->cpu.interrupts == 1) {
 			if (machine->last_interrupt == 1) {
 				printf("interrupt %d\n", 1);
 				generate_interrupt(&machine->cpu, 1);
 				machine->last_interrupt = 0;
+				/*exit(1);*/
 			} else {
 				printf("interrupt %d\n", 2);
 				generate_interrupt(&machine->cpu, 2);
@@ -117,7 +145,6 @@ run_machine(struct Machine *machine) {
 		}
 		cycles = 0;
 		machine->timer = now;
-		/*draw_display(machine);*/
-		usleep(8000);
+		draw_display(machine, surface, window);
 	}
 }
