@@ -12,7 +12,7 @@ struct Machine cabinet = {0};
 int
 main(void) {
 
-	/*InitWindow(256, 224, "Space Invaders Emulated");*/
+	InitWindow(256, 224, "Space Invaders Emulated");
 	/*SetTargetFPS(60);*/
 
 	struct Machine cabinet = {0};
@@ -24,6 +24,7 @@ main(void) {
 	if (map(cpu, f)) return 1;
 	fclose(f);
 
-			run_machine(&cabinet);
+	run_machine(&cabinet);
+	CloseWindow();
 	return 0;
 }

@@ -1,4 +1,5 @@
 #include <bits/types/struct_timeval.h>
+#include <raylib.h>
 #include <unistd.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -53,14 +54,37 @@ getmsec(void) {
 }
 
 void
+draw_display(struct Machine *machine) {
+	unsigned char *buf = &machine->cpu.ram[0x2400];
+	int id = 0;
+	printf("drawing\n");
+	BeginDrawing();
+	for (int i = 0; i < 224; i++) {
+		for (int j = 255; j > 0; j -= 8) {
+			for (int p = 0; p < 8; p++) {
+				int idx = (j - p) * 224 + 255;
+				if (buf[id] & (1 << p)) {
+					DrawPixel(i, j - p, WHITE);
+				} else {
+					DrawPixel(i, j - p, BLACK);
+				}
+			}
+			id++;
+		}
+	}
+	EndDrawing();
+}
+
+void
 run_machine(struct Machine *machine) {
 	int cycles = 0;
 	machine->last_interrupt = 1;
 	double now = getmsec();
 	machine->timer = now;
 	machine->next_interrupt = now + 16000.0;
-	while (1) {
+	while (!WindowShouldClose()) {
 		now = getmsec();
+		draw_display(machine);
 
 		while (cycles < 17066) {
 			unsigned char *op = &machine->cpu.ram[machine->cpu.pc];
@@ -93,6 +117,7 @@ run_machine(struct Machine *machine) {
 		}
 		cycles = 0;
 		machine->timer = now;
+		/*draw_display(machine);*/
 		usleep(8000);
 	}
 }
