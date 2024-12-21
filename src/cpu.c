@@ -50,6 +50,15 @@ add(uint8_t reg, struct CPU *cpu) {
 	cpu->registers.a = ans & 0xff;
 }
 
+void
+generate_interrupt(struct CPU *cpu, int interrupt)
+{
+	cpu->ram[cpu->registers.sp - 1] = (cpu->registers.pc & 0xFF00) >> 8;
+	cpu->ram[cpu->registers.sp - 2] = cpu->registers.pc & 0x00FF;
+	cpu->registers.sp -= 2;
+	cpu->registers.pc = 8 * interrupt;
+}
+
 int
 emulate(struct CPU *cpu) {
 	struct Registers *registers = &cpu->registers;

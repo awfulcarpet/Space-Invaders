@@ -26,6 +26,7 @@ main(void) {
 
 
 	int run = 0;
+	float last_interrupt = 0.0;
 	while (!run) {
 		if (WindowShouldClose()) {
 			break;
@@ -48,6 +49,13 @@ main(void) {
 		}
 
 		run = emulate(cpu);
+
+		if (GetTime() - last_interrupt > 1.0/60.0) {
+			if (cpu->interrupts == 1) {
+				generate_interrupt(cpu, 2);
+				last_interrupt = GetTime();
+			}
+		}
 
 		BeginDrawing();
 		ClearBackground(WHITE);

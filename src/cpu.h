@@ -41,5 +41,6 @@ struct CPU {
 };
 
 int map(struct CPU *cpu, FILE *f);
+void generate_interrupt(struct CPU *cpu, int interrupt);
 int emulate(struct CPU *cpu);
 void print_cpu_state(struct CPU *cpu);
