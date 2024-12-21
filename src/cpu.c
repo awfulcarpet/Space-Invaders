@@ -341,10 +341,10 @@ emulate(struct CPU *cpu) {
 			break;
 		case 0x35: // DCR  M
 		{
-			unimplemented(opcode[0]);
-			uint8_t ans = cpu->ram[(cpu->h << 8) | cpu->l];
-			// set_flags(cpu, ans, SIGN | ZERO | PARITY);
-			cpu->b = ans & 0xff;
+			uint8_t adr = (cpu->h << 8) | cpu->l;
+			uint8_t ans = cpu->ram[adr] - 1;
+			set_flags(cpu, ans, 8, SIGN | ZERO | PARITY);
+			cpu->ram[adr] = ans & 0xff;
 			break;
 		}
 		case 0x36: // MVI  M,d8
@@ -905,19 +905,16 @@ emulate(struct CPU *cpu) {
 			break;
 		}
 		case 0xc8: // RZ
-			unimplemented(opcode[0]);
 			if (!cpu->flags.z) {
-				cpu->pc += 2;
 				break;
 			}
-			cpu->pc = cpu->ram[cpu->sp] | (cpu->ram[cpu->sp + 1] << 8);
 
+			cpu->pc = pop(cpu);
 			break;
 		case 0xc9: // RET
 			cpu->pc = pop(cpu);
 			break;
 		case 0xca: // JZ a16
-			unimplemented(opcode[0]);
 			if (cpu->flags.z != 1) {
 				cpu->pc += 2;
 				break;
@@ -972,8 +969,7 @@ emulate(struct CPU *cpu) {
 			break;
 		}
 		case 0xd2: // JNC a16
-			unimplemented(opcode[0]);
-			if (cpu->flags.c) {
+			if (cpu->flags.c != 0) {
 				cpu->pc += 2;
 				break;
 			}
@@ -1019,8 +1015,7 @@ emulate(struct CPU *cpu) {
 			break;
 
 		case 0xda: // JC a16
-			unimplemented(opcode[0]);
-			if (!cpu->flags.c) {
+			if (cpu->flags.c == 0) {
 				cpu->pc += 2;
 				break;
 			}
