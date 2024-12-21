@@ -21,7 +21,7 @@ struct Flags {
 	uint8_t s:1;
 };
 
-struct Registers {
+struct CPU {
 	uint8_t a;
 	uint8_t b;
 	uint8_t c;
@@ -31,15 +31,11 @@ struct Registers {
 	uint8_t l;
 	uint16_t sp;
 	uint16_t pc;
-};
-
-struct CPU {
 	struct Flags flags;
-	struct Registers registers;
 	uint8_t *ram; // little endian
 	bool interrupts;
 };
 
 int map(struct CPU *cpu, FILE *f);
 int emulate(struct CPU *cpu);
-void print_cpu_state(struct CPU *cpu);
+void print_cpu_state(struct CPU *cpu, int cycles);
