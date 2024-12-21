@@ -1250,7 +1250,7 @@ emulate(struct CPU *cpu) {
 	/*print_opcode(cpu->ram, cpu->pc);*/
 	/*printf("\n");*/
 
-	return cycles8080[*opcode];
+	return cycles8080[opcode[0]];
 }
 
 void print_cpu_state(struct CPU *cpu) {

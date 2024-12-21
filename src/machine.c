@@ -57,23 +57,26 @@ run_machine(struct Machine *machine) {
 	int cycles = 0;
 	machine->last_interrupt = 1;
 	double now = getmsec();
-
+	machine->timer = now;
 	machine->next_interrupt = now + 16000.0;
 	while (1) {
 		now = getmsec();
-		unsigned char *op = &machine->cpu.ram[machine->cpu.pc];
-		if (*op == 0xdb) { // IN
-			printf("inputting %d\n", op[1]);
-			machine->cpu.a = machineIN(machine, op[1]);
-			machine->cpu.pc += 2;
-			cycles += 3;
-		} else if (*op == 0xd3) { // OUT
-			printf("outputting %d\n", op[1]);
-			machineOUT(machine, op[1]);
-			machine->cpu.pc += 2;
-			cycles += 3;
-		} else {
-			cycles += emulate(&machine->cpu);
+
+		while (cycles < 17066) {
+			unsigned char *op = &machine->cpu.ram[machine->cpu.pc];
+			if (*op == 0xdb) { // IN
+				printf("inputting %d\n", op[1]);
+				machine->cpu.a = machineIN(machine, op[1]);
+				machine->cpu.pc += 2;
+				cycles += 10;
+			} else if (*op == 0xd3) { // OUT
+				printf("outputting %d\n", op[1]);
+				machineOUT(machine, op[1]);
+				machine->cpu.pc += 2;
+				cycles += 3;
+			} else {
+				cycles += emulate(&machine->cpu);
+			}
 		}
 
 		if (machine->cpu.interrupts == 1 && (now > machine->next_interrupt)) {
@@ -88,5 +91,8 @@ run_machine(struct Machine *machine) {
 			}
 			machine->next_interrupt = now + 8000.0;
 		}
+		cycles = 0;
+		machine->timer = now;
+		usleep(8000);
 	}
 }
