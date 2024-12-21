@@ -1,11 +1,20 @@
+#include <bits/types/struct_timeval.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <sys/time.h>
 #include "raylib.h"
 
 #include "cpu.h"
 #include "machine.h"
 
 struct Machine cabinet = {0};
+
+double
+get_time() {
+	struct timeval time;
+	gettimeofday(&time, NULL);
+	return ((double)time.tv_sec * 1E6) + (double)time.tv_usec;
+}
 
 int
 main(void) {
@@ -26,39 +35,62 @@ main(void) {
 	/*fclose(f);*/
 
 
+	cabinet.timer = 0;
 	int run = 0;
 	float last_interrupt = 0.0;
+
 	while (!run) {
 		if (WindowShouldClose()) {
 			break;
 		}
 
-		setKeys(&cabinet);
+		double now = get_time();
 
-		uint8_t *opcode = &cpu->ram[cpu->registers.pc];
-
-		if (opcode[0] == 0xdb) { // IN d8
-			cpu->registers.a = machineIN(&cabinet, opcode[1]);
-			cpu->registers.pc += 2;
-			continue;
-		}
-		if (opcode[0] == 0xd3) { // OUT d8
-			machineOUT(&cabinet, opcode[1]);
-			cpu->registers.pc += 2;
-			continue;
+		if (cabinet.timer == 0.0) {
+			cabinet.timer = now;
+			cabinet.next_interrupt = cabinet.timer + 16000.0;
+			cabinet.interrupt = 1;
 		}
 
-		run = emulate(cpu);
-
-		if (GetTime() - last_interrupt > 1.0/60.0) {
-			if (cpu->interrupts == 1) {
+		if (cpu->interrupts && now > cabinet.next_interrupt) {
+			if (cabinet.next_interrupt == 1) {
+				generate_interrupt(cpu, 1);
+				cabinet.interrupt = 2;
+			} else {
 				generate_interrupt(cpu, 2);
-				last_interrupt = GetTime();
+				cabinet.interrupt = 1;
 			}
+			cabinet.next_interrupt = now + 8000.0;
 		}
+
+
+		double delta = get_time() - cabinet.timer;
+		int left = delta * 2;
+		int cycles = 0;
+
+
+		while (cycles < left) {
+			uint8_t *opcode = &cpu->ram[cpu->registers.pc];
+
+			if (opcode[0] == 0xdb) { // IN d8
+				cpu->registers.a = machineIN(&cabinet, opcode[1]);
+				cpu->registers.pc += 2;
+				cycles += 3;
+			}
+			if (opcode[0] == 0xd3) { // OUT d8
+				machineOUT(&cabinet, opcode[1]);
+				cpu->registers.pc += 2;
+				cycles += 3;
+			}
+
+			cycles += emulate(cpu);
+		}
+
+		cabinet.timer = get_time();
 
 		BeginDrawing();
 		ClearBackground(WHITE);
+			setKeys(&cabinet);
 			/*DrawText(TextFormat("%02x\n", cpu->ram[0x32]), 0, 0, 32, BLACK);*/
 			draw_display(&cabinet);
 		EndDrawing();

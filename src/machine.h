@@ -4,6 +4,8 @@ struct Machine {
 	struct CPU cpu;
 
 	double last_interrupt;
+	double next_interrupt;
+	double interrupt;
 	double timer;
 
 	uint8_t ports[7];
