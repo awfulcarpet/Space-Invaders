@@ -74,6 +74,8 @@ void
 generate_interrupt(struct CPU *cpu, int interrupt) {
 	push(cpu, cpu->pc);
 	cpu->pc = 8 * interrupt;
+
+	cpu->interrupts = 0;
 }
 
 unsigned char cycles8080[] = {
@@ -1243,10 +1245,10 @@ emulate(struct CPU *cpu) {
 			break;
 		}
 	}
-	print_cpu_state(cpu);
-	printf("next: ");
-	print_opcode(cpu->ram, cpu->pc);
-	printf("\n");
+	/*print_cpu_state(cpu);*/
+	/*printf("next: ");*/
+	/*print_opcode(cpu->ram, cpu->pc);*/
+	/*printf("\n");*/
 
 	return cycles8080[*opcode];
 }

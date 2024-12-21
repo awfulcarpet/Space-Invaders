@@ -1,7 +1,7 @@
 #include <bits/types/struct_timeval.h>
+#include <unistd.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <raylib.h>
 #include <string.h>
 #include <sys/time.h>
 
@@ -19,7 +19,7 @@ machineIN(struct Machine *machine, uint8_t port) {
 			return (machine->shift_val >> (8 - machine->shift_offset)) & 0xff;
 			break;
 		default:
-			fprintf(stderr, "wrong port read from: %d\n", port);
+			/*fprintf(stderr, "wrong port read from: %d\n", port);*/
 			/*abort();*/
 			break;
 	}
@@ -37,62 +37,11 @@ machineOUT(struct Machine *machine, uint8_t port) {
 			machine->shift_val = (machine->shift_val >> 8) | (a << 8);
 			break;
 		default:
-			fprintf(stderr, "wrong port written to: %d\n", port);
+			/*fprintf(stderr, "wrong port written to: %d\n", port);*/
 			/*abort();*/
 			break;
 	}
 	return 0;
-}
-
-void
-draw_display(struct Machine *machine) {
-	int width = 256;
-	int height = 224;
-
-	unsigned char *buffer = calloc(width * height, sizeof(unsigned char));
-	unsigned char *framebuffer = &machine->cpu.ram[2400];
-
-	// memory has it flipped 90 degrees clockwise
-	for (int i = 0; i < width; i++) {
-		for (int j = 0; j < height; j += 8) {
-			unsigned char line = framebuffer[i * (height/8) + (j/8)];
-
-			for (int p = 0; p < 8; p++) {
-				buffer[(height - 1 - p - j) * width + i] = (line & (0x1 << (7 - p))) > 0;
-			}
-		}
-	}
-	/*for (int i = 0; i < 224; i++) {*/
-	/*	for (int j = 0; j < 256; j += 8) {*/
-	/*		int p;*/
-	/*		unsigned char pi = framebuffer[(i*(256/8)) + j/8];*/
-	/**/
-	/*		int offset = (255-j)*(224*4) + (i*4);*/
-	/*		unsigned int *p1 = (unsigned int *)(&buffer[offset]);*/
-	/**/
-	/*		for (p = 0; p < 8; p++) {*/
-	/*			if (0 != (pi & (1 << p)))*/
-	/*				*p1 = 0xFFFFFFFFL;*/
-	/*			else*/
-	/*				*p1 = 0x00000000L;*/
-	/*			p1-=224;*/
-	/*		}*/
-	/*	}*/
-	/*}*/
-
-	Image disp = {
-		.data = buffer,
-		.width = width,
-		.height = height,
-		.format = PIXELFORMAT_UNCOMPRESSED_GRAYSCALE,
-		/*.format = PIXELFORMAT_UNCOMPRESSED_R32,*/
-	};
-
-	Texture2D texture = LoadTextureFromImage(disp);
-	DrawTexture(texture, 0, 0, WHITE);
-
-	UnloadTexture(texture);
-	free(buffer);
 }
 
 static double
@@ -106,44 +55,32 @@ getmsec(void) {
 void
 run_machine(struct Machine *machine) {
 	int cycles = 0;
-	int global_cycles = 0;
-	machine->next_interrupt = getmsec() + 16000.0;
-	machine->next_interrupt = 1;
+	machine->last_interrupt = 1;
 
 	while (1) {
-		double now = getmsec();
+		unsigned char *op = &machine->cpu.ram[machine->cpu.pc];
+		if (*op == 0xdb) { // IN
+			printf("inputting\n");
+			machine->cpu.a = machineIN(machine, op[1]);
+			machine->cpu.pc += 2;
+			cycles += 3;
+		} else if (*op == 0xd3) { // OUT
+			printf("outputting\n");
+			machineOUT(machine, op[1]);
+			machine->cpu.pc += 2;
+			cycles += 3;
+		} else {
+			cycles += emulate(&machine->cpu);
+		}
 
-		if (now - machine->timer > 1.0 / 60.0) {
-			if (machine->interrupt == 1) {
+		if (machine->cpu.interrupts == 1) {
+			if (machine->last_interrupt == 1) {
 				generate_interrupt(&machine->cpu, 1);
-				machine->interrupt = 2;
+				machine->last_interrupt = 0;
 			} else {
 				generate_interrupt(&machine->cpu, 2);
-				machine->interrupt = 1;
+				machine->last_interrupt = 1;
 			}
-			machine->next_interrupt = now + 8000.0;
 		}
-
-		double elapse = now - machine->timer;
-		int cycles_needed = 2 * elapse;
-
-		while (cycles < cycles_needed) {
-			printf("cycles: %d\n", cycles);
-			unsigned char *op = &machine->cpu.ram[machine->cpu.pc];
-			if (*op == 0xdb) { // IN
-				machine->cpu.a = machineIN(machine, op[1]);
-				machine->cpu.pc += 2;
-				cycles += 3;
-			} else if (*op == 0xd3) { // OUT
-				machineOUT(machine, op[1]);
-				machine->cpu.pc += 2;
-				cycles += 3;
-			} else {
-				cycles += emulate(&machine->cpu);
-			}
-			global_cycles += cycles;
-		}
-
-		machine->timer = now;
 	}
 }
