@@ -11,5 +11,10 @@ machine_init(struct Machine *machine) {
 	if (map(machine->cpu, f)) return 1;
 	fclose(f);
 
+	// link all ports
+	for (int i = 0; i < 7; i++) {
+		machine->cpu->ports[i] = &machine->ports[i];
+	}
+
 	return 0;
 }
