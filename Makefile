@@ -1,4 +1,4 @@
-WARNING = -Wall -Wextra -Wpedantic -Wno-unused-result -Wno-all
+WARNING = -Wall -Wextra -Wpedantic -Wno-unused-result -Wno-all -ggdb
 CFLAGS = -std=c99 -O2 $(WARNING) -pipe -ggdb -Iinclude -I/usr/local/include
 LDLIBS = -lraylib -lGL -lm -lX11 -lpthread -ldl -lrt
 EMCCFLAGS = lib/libraylib.a -s USE_GLFW=3 --shell-file minshell.html -s ASYNCIFY -s FORCE_FILESYSTEM=1 --preload-file .

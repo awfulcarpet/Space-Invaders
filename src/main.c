@@ -10,7 +10,8 @@ struct Machine cabinet = {0};
 int
 main(void) {
 
-	InitWindow(256, 254, "Space Invaders Emulated");
+	InitWindow(256, 224, "Space Invaders Emulated");
+	SetTargetFPS(60);
 
 	struct Machine cabinet = {0};
 	struct CPU *cpu = &cabinet.cpu;
@@ -34,7 +35,6 @@ main(void) {
 
 		setKeys(&cabinet);
 
-		printf("%08b\n", cabinet.ports[0]);
 		uint8_t *opcode = &cpu->ram[cpu->registers.pc];
 
 		if (opcode[0] == 0xdb) { // IN d8
@@ -59,7 +59,8 @@ main(void) {
 
 		BeginDrawing();
 		ClearBackground(WHITE);
-			DrawText(TextFormat("%02x\n", cpu->ram[0x32]), 0, 0, 32, BLACK);
+			/*DrawText(TextFormat("%02x\n", cpu->ram[0x32]), 0, 0, 32, BLACK);*/
+			draw_display(&cabinet);
 		EndDrawing();
 	}
 
