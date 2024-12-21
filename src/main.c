@@ -9,24 +9,17 @@
 
 struct Machine cabinet = {0};
 
-double
-get_time() {
-	struct timeval time;
-	gettimeofday(&time, NULL);
-	return ((double)time.tv_sec * 1E6) + (double)time.tv_usec;
-}
-
 int
 main(void) {
 
-	InitWindow(256, 224, "Space Invaders Emulated");
-	SetTargetFPS(60);
+	/*InitWindow(256, 224, "Space Invaders Emulated");*/
+	/*SetTargetFPS(60);*/
 
 	struct Machine cabinet = {0};
 	struct CPU *cpu = &cabinet.cpu;
 
-	cabinet.ports[0] = 0b00001110;
-	cabinet.ports[1] = 0b00010000;
+	/*cabinet.ports[0] = 0b00001110;*/
+	/*cabinet.ports[1] = 0b00010000;*/
 
 	FILE *f = fopen("space-invaders.rom", "r");
 	/*int len = 0;*/
@@ -35,11 +28,12 @@ main(void) {
 	fclose(f);
 
 
-	cabinet.timer = 0;
 	int run = 0;
-	float last_interrupt = 0.0;
 
-	while (!run) {
+	while (1) {
+		emulate(cpu);
+	}
+	/*while (!run) {*/
 		/*if (WindowShouldClose()) {*/
 		/*	break;*/
 		/*}*/
@@ -84,7 +78,8 @@ main(void) {
 		/*	}*/
 		/**/
 			/*cycles += emulate(cpu);*/
-			emulate(cpu);
+			/*emulate(cpu);*/
+		/*getchar();*/
 		/*}*/
 
 		/*cabinet.timer = get_time();*/
@@ -94,7 +89,7 @@ main(void) {
 		/*	setKeys(&cabinet);*/
 		/*	draw_display(&cabinet);*/
 		/*EndDrawing();*/
-	}
+	/*}*/
 
 	/*CloseWindow();*/
 	return 0;

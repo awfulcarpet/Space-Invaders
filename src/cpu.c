@@ -28,57 +28,82 @@ unimplemented(uint8_t opcode) {
 	exit(1);
 }
 
-// TODO: do set/reset flags later
+static int
+parity(int x, int size) {
+	int p = 0;
+	x = (x & ((1 << size) - 1));
+	for (int i = 0; i < size; i++) {
+		if (x & 0x1) p++;
+		x = x >> 1;
+	}
+	return (p & 0x1) == 0;
+}
+
 static void
-set_flags(struct CPU *cpu, uint16_t num, uint8_t flags) {
+set_flags(struct CPU *cpu, uint16_t num, int size, uint8_t flags) {
 	if (flags & SIGN)
-		cpu->flags.s = (num & (0x01 << 7)) == 1;
+		cpu->flags.s = (num & 0x80) == 0x80;
+
 	if (flags & ZERO)
-		cpu->flags.z = (num & 0xff) == 0;
-	// TODO: fix all parity checks
+		cpu->flags.z = num == 0;
+
+	// TODO: Parity?
 	if (flags & PARITY)
-		cpu->flags.p = (num & 0xff) % 2 == 0;
+		cpu->flags.p = parity(num, size);
+
 	if (flags & CARRY)
-		cpu->flags.c = num > 0xff;
+		cpu->flags.c = (num & 0xff00) > 0;
 }
+
+/*static void*/
+/*add(uint8_t reg, struct CPU *cpu) {*/
+/*	uint16_t ans = (uint16_t) cpu->registers.a + (uint16_t) reg;*/
+/**/
+/*	set_flags(cpu, ans, SIGN);*/
+/*	cpu->registers.a = ans & 0xff;*/
+/*}*/
+
+/*void*/
+/*generate_interrupt(struct CPU *cpu, int interrupt)*/
+/*{*/
+/*	cpu->ram[cpu->registers.sp - 1] = (cpu->registers.pc & 0xFF00) >> 8;*/
+/*	cpu->ram[cpu->registers.sp - 2] = cpu->registers.pc & 0x00FF;*/
+/*	cpu->registers.sp -= 2;*/
+/**/
+/*	cpu->registers.pc = 8 * interrupt;*/
+/**/
+/*	cpu->interrupts = 0;*/
+/*}*/
 
 static void
-add(uint8_t reg, struct CPU *cpu) {
-	uint16_t ans = (uint16_t) cpu->registers.a + (uint16_t) reg;
+push(struct CPU *cpu, uint16_t num) {
+	cpu->ram[cpu->sp - 1] = (num >> 8) & 0xff;
+	cpu->ram[cpu->sp - 2] = num & 0xff;
 
-	set_flags(cpu, ans, SIGN);
-	cpu->registers.a = ans & 0xff;
+	cpu->sp -= 2;
 }
-
-void
-generate_interrupt(struct CPU *cpu, int interrupt)
-{
-	cpu->ram[cpu->registers.sp - 1] = (cpu->registers.pc & 0xFF00) >> 8;
-	cpu->ram[cpu->registers.sp - 2] = cpu->registers.pc & 0x00FF;
-	cpu->registers.sp -= 2;
-
-	cpu->registers.pc = 8 * interrupt;
-
-	cpu->interrupts = 0;
+static uint16_t
+pop(struct CPU *cpu) {
+	uint16_t adr = (cpu->ram[cpu->sp + 1] << 8) | cpu->ram[cpu->sp];
+	cpu->sp += 2;
+	return adr;
 }
 
 int
 emulate(struct CPU *cpu) {
-	struct Registers *registers = &cpu->registers;
-	uint8_t *opcode = &cpu->ram[cpu->registers.pc];
+	uint8_t *opcode = &cpu->ram[cpu->pc];
 	int bytes = 1;
 
-	registers->pc++;
-
-	/*get_opcode_bytelen(cpu->ram, registers->pc);*/
+	print_opcode(cpu->ram, cpu->pc);
+	cpu->pc++;
 
 	switch (*opcode) {
 		case 0x00: // NOP
 			break;
 		case 0x01: // LXI  B,d16
-			registers->c = opcode[1];
-			registers->b = opcode[2];
-			registers->pc += 2;
+			cpu->c = opcode[1];
+			cpu->b = opcode[2];
+			cpu->pc += 2;
 			break;
 		case 0x02: // STAX B
 			unimplemented(opcode[0]);
@@ -91,14 +116,14 @@ emulate(struct CPU *cpu) {
 			break;
 		case 0x05: // DCR  B
 		{
-			uint8_t ans = registers->b - 1;
-			set_flags(cpu, ans, SIGN | ZERO | PARITY);
-			registers->b = ans & 0xff;
+			uint8_t ans = cpu->b - 1;
+			set_flags(cpu, ans, 8, SIGN | ZERO | PARITY);
+			cpu->b = ans & 0xff;
 			break;
 		}
 		case 0x06: // MVI  B,d8
-			registers->b = opcode[1];
-			registers->pc++;
+			cpu->b = opcode[1];
+			cpu->pc++;
 			break;
 		case 0x07: // RLC
 			unimplemented(opcode[0]);
@@ -108,20 +133,20 @@ emulate(struct CPU *cpu) {
 			break;
 		case 0x09: // DAD  B
 		{
-			uint16_t hl = (registers->h << 8) | registers->l;
-			uint16_t add = (registers->b << 8) | registers->c;
+			uint16_t hl = (cpu->h << 8) | cpu->l;
+			uint16_t add = (cpu->b << 8) | cpu->c;
 
 			uint16_t res = hl + add;
-			set_flags(cpu, res, CARRY);
-			registers->h = (res & 0xff00) >> 8;
-			registers->l = res & 0xff;
+			cpu->h = (res & 0xff00) >> 8;
+			cpu->l = res & 0xff;
+			set_flags(cpu, res, 8, CARRY);
 			break;
 		}
 		case 0x0a: // LDAX B
 		{
 			unimplemented(opcode[0]);
-			uint16_t adr = (registers->b << 8) | registers->c;
-			registers->a = cpu->ram[adr];
+			uint16_t adr = (cpu->b << 8) | cpu->c;
+			cpu->a = cpu->ram[adr];
 			break;
 		}
 		case 0x0b: // DCX  B
@@ -131,36 +156,39 @@ emulate(struct CPU *cpu) {
 			unimplemented(opcode[0]);
 			break;
 		case 0x0d: // DCR  C
-			registers->c = registers->c -= 1;
-			set_flags(cpu, registers->c, SIGN | ZERO | PARITY);
+		{
+			uint8_t ans = cpu->c - 1;
+			set_flags(cpu, ans, 8, SIGN | ZERO | PARITY);
+			cpu->c = ans & 0xff;
 			break;
+		}
 		case 0x0e: // MVI  C,d8
-			registers->c = opcode[1];
-			registers->pc++;
+			cpu->c = opcode[1];
+			cpu->pc++;
 			break;
 		case 0x0f: // RRC
 		{
-			uint8_t tmp = registers->a;
-			registers->a = registers->a >> 1;
-			registers->a = registers->a | ((tmp & 1) << 7);
+			uint8_t tmp = cpu->a;
+			cpu->a = cpu->a >> 1;
+			cpu->a = cpu->a | ((tmp & 1) << 7);
+			cpu->flags.c = (tmp & 1) == 1;
 			break;
 		}
 		case 0x10: // 0x10 ILLEGAL
 			unimplemented(opcode[0]);
 			break;
 		case 0x11: // LXI  D,d16
-			registers->e = opcode[1];
-			registers->d = opcode[2];
-			registers->pc += 2;
+			cpu->e = opcode[1];
+			cpu->d = opcode[2];
+			cpu->pc += 2;
 			break;
 		case 0x12: // STAX D
 			unimplemented(opcode[0]);
-			unimplemented(opcode[0]);
 			break;
 		case 0x13: // INX  D
-			registers->e++;
-			if (registers->e == 0)
-				registers->d++;
+			cpu->e++;
+			if (cpu->e == 0)
+				cpu->d++;
 			break;
 		case 0x14: // INR  D
 			unimplemented(opcode[0]);
@@ -170,8 +198,8 @@ emulate(struct CPU *cpu) {
 			break;
 		case 0x16: // MVI  D,d8
 			unimplemented(opcode[0]);
-			registers->d = opcode[1];
-			registers->pc++;
+			cpu->d = opcode[1];
+			cpu->pc++;
 			break;
 		case 0x17: // RAL
 			unimplemented(opcode[0]);
@@ -181,19 +209,20 @@ emulate(struct CPU *cpu) {
 			break;
 		case 0x19: // DAD  D
 		{
-			uint16_t hl = (registers->h << 8) | registers->l;
-			uint16_t add = (registers->d << 8) | registers->e;
+			uint16_t hl = (cpu->h << 8) | cpu->l;
+			uint16_t add = (cpu->d << 8) | cpu->e;
 
 			uint16_t res = hl + add;
-			set_flags(cpu, res, CARRY);
-			registers->h = (res & 0xff00) >> 8;
-			registers->l = res & 0xff;
+			cpu->h = (res & 0xff00) >> 8;
+			cpu->l = res & 0xff;
+
+			set_flags(cpu, res, 8, CARRY);
 			break;
 		}
 		case 0x1a: // LDAX D
 		{
-			uint16_t adr = (registers->d << 8) | registers->e;
-			registers->a = cpu->ram[adr];
+			uint16_t adr = (cpu->d << 8) | cpu->e;
+			cpu->a = cpu->ram[adr];
 			break;
 		}
 		case 0x1b: // DCX  D
@@ -207,8 +236,8 @@ emulate(struct CPU *cpu) {
 			break;
 		case 0x1e: // MVI  E,d8
 			unimplemented(opcode[0]);
-			registers->e = opcode[1];
-			registers->pc++;
+			cpu->e = opcode[1];
+			cpu->pc++;
 			break;
 		case 0x1f: // RAR
 			unimplemented(opcode[0]);
@@ -218,17 +247,17 @@ emulate(struct CPU *cpu) {
 			break;
 
 		case 0x21: // LXI  H,d16
-			registers->l = opcode[1];
-			registers->h = opcode[2];
-			registers->pc += 2;
+			cpu->l = opcode[1];
+			cpu->h = opcode[2];
+			cpu->pc += 2;
 			break;
 		case 0x22: // SHLD a16
 			unimplemented(opcode[0]);
 			break;
 		case 0x23: // INX  H
-			registers->l++;
-			if (registers->l == 0)
-				registers->h++;
+			cpu->l++;
+			if (cpu->l == 0)
+				cpu->h++;
 			break;
 		case 0x24: // INR  H
 			unimplemented(opcode[0]);
@@ -237,8 +266,8 @@ emulate(struct CPU *cpu) {
 			unimplemented(opcode[0]);
 			break;
 		case 0x26: // MVI  H,d8
-			registers->h = opcode[1];
-			registers->pc++;
+			cpu->h = opcode[1];
+			cpu->pc++;
 			break;
 		case 0x27: // DAA
 			unimplemented(opcode[0]);
@@ -248,13 +277,14 @@ emulate(struct CPU *cpu) {
 			break;
 		case 0x29: // DAD  H
 		{
-			uint16_t hl = (registers->h << 8) | registers->l;
-			uint16_t add = (registers->h << 8) | registers->l;
+			uint16_t hl = (cpu->h << 8) | cpu->l;
+			uint16_t add = (cpu->h << 8) | cpu->l;
 
 			uint16_t res = hl + add;
-			set_flags(cpu, res, CARRY);
-			registers->h = (res & 0xff00) >> 8;
-			registers->l = res & 0xff;
+			cpu->h = (res & 0xff00) >> 8;
+			cpu->l = res & 0xff;
+
+			set_flags(cpu, res, 8, CARRY);
 			break;
 		}
 		case 0x2a: // LHLD a16
@@ -271,26 +301,26 @@ emulate(struct CPU *cpu) {
 			break;
 		case 0x2e: // MVI  L,d8
 			unimplemented(opcode[0]);
-			registers->l = opcode[1];
-			registers->pc++;
+			cpu->l = opcode[1];
+			cpu->pc++;
 			break;
 		case 0x2f: // CMA
 			unimplemented(opcode[0]);
-			registers->a = ~registers->a;
+			cpu->a = ~cpu->a;
 			break;
 		case 0x30: // 0x30 ILLEGAL
 			unimplemented(opcode[0]);
 			break;
 
 		case 0x31: // LXI  SP d16
-			registers->sp = (opcode[2] << 8) | opcode[1];
-			registers->pc += 2;
+			cpu->sp = (opcode[2] << 8) | opcode[1];
+			cpu->pc += 2;
 			break;
 		case 0x32: // STA a16
 		{
 			uint16_t adr = (opcode[2] << 8) | opcode[1];
-			cpu->ram[adr] = registers->a;
-			registers->pc += 2;
+			cpu->ram[adr] = cpu->a;
+			cpu->pc += 2;
 			break;
 		}
 		case 0x33: // INX  SP
@@ -302,16 +332,16 @@ emulate(struct CPU *cpu) {
 		case 0x35: // DCR  M
 		{
 			unimplemented(opcode[0]);
-			uint8_t ans = cpu->ram[(registers->h << 8) | registers->l];
-			set_flags(cpu, ans, SIGN | ZERO | PARITY);
-			registers->b = ans & 0xff;
+			uint8_t ans = cpu->ram[(cpu->h << 8) | cpu->l];
+			// set_flags(cpu, ans, SIGN | ZERO | PARITY);
+			cpu->b = ans & 0xff;
 			break;
 		}
 		case 0x36: // MVI  M,d8
 		{
-			uint16_t adr = (registers->h << 8) | registers->l;
+			uint16_t adr = (cpu->h << 8) | cpu->l;
 			cpu->ram[adr] = opcode[1];
-			registers->pc++;
+			cpu->pc++;
 			break;
 		}
 		case 0x37: // STC
@@ -326,8 +356,8 @@ emulate(struct CPU *cpu) {
 		case 0x3a: // LDA a16
 		{
 			uint16_t adr = (opcode[2] << 8) | opcode[1];
-			registers->a = cpu->ram[adr];
-			registers->pc += 2;
+			cpu->a = cpu->ram[adr];
+			cpu->pc += 2;
 			break;
 		}
 		case 0x3b: // DCX  SP
@@ -340,210 +370,211 @@ emulate(struct CPU *cpu) {
 			unimplemented(opcode[0]);
 			break;
 		case 0x3e: // MVI  A,d8
-			registers->a = opcode[1];
-			registers->pc++;
+			cpu->a = opcode[1];
+			cpu->pc++;
 			break;
 		case 0x3f: // CMC
 			unimplemented(opcode[0]);
 			break;
 
 		case 0x40: // MOV B,B
-			registers->b = registers->b;
+			unimplemented(opcode[0]);
+			cpu->b = cpu->b;
 			break;
 		case 0x41: // MOV B,C
 			unimplemented(opcode[0]);
-			registers->b = registers->c;
+			cpu->b = cpu->c;
 			break;
 		case 0x42: // MOV B,D
 			unimplemented(opcode[0]);
-			registers->b = registers->d;
+			cpu->b = cpu->d;
 			break;
 		case 0x43: // MOV B,E
 			unimplemented(opcode[0]);
-			registers->b = registers->e;
+			cpu->b = cpu->e;
 			break;
 		case 0x44: // MOV B,H
 			unimplemented(opcode[0]);
-			registers->b = registers->h;
+			cpu->b = cpu->h;
 			break;
 		case 0x45: // MOV B,L
 			unimplemented(opcode[0]);
-			registers->b = registers->l;
+			cpu->b = cpu->l;
 			break;
 		case 0x46: // MOV B,M
 			unimplemented(opcode[0]);
 			break;
 		case 0x47: // MOV B,A
 			unimplemented(opcode[0]);
-			registers->b = registers->a;
+			cpu->b = cpu->a;
 			break;
 
 		case 0x48: // MOV C,B
 			unimplemented(opcode[0]);
-			registers->c = registers->b;
+			cpu->c = cpu->b;
 			break;
 		case 0x49: // MOV C,C
 			unimplemented(opcode[0]);
-			registers->c = registers->c;
+			cpu->c = cpu->c;
 			break;
 		case 0x4a: // MOV C,D
 			unimplemented(opcode[0]);
-			registers->c = registers->d;
+			cpu->c = cpu->d;
 			break;
 		case 0x4b: // MOV C,E
 			unimplemented(opcode[0]);
-			registers->c = registers->e;
+			cpu->c = cpu->e;
 			break;
 		case 0x4c: // MOV C,H
 			unimplemented(opcode[0]);
-			registers->c = registers->h;
+			cpu->c = cpu->h;
 			break;
 		case 0x4d: // MOV C,L
 			unimplemented(opcode[0]);
-			registers->c = registers->l;
+			cpu->c = cpu->l;
 			break;
 		case 0x4e: // MOV C,M
 			unimplemented(opcode[0]);
 			break;
 		case 0x4f: // MOV C,A
 			unimplemented(opcode[0]);
-			registers->c = registers->a;
+			cpu->c = cpu->a;
 			break;
 
 		case 0x50: // MOV D,B
 			unimplemented(opcode[0]);
-			registers->d = registers->b;
+			cpu->d = cpu->b;
 			break;
 		case 0x51: // MOV D,C
 			unimplemented(opcode[0]);
-			registers->d = registers->c;
+			cpu->d = cpu->c;
 			break;
 		case 0x52: // MOV D,D
 			unimplemented(opcode[0]);
-			registers->d = registers->d;
+			cpu->d = cpu->d;
 			break;
 		case 0x53: // MOV D,E
 			unimplemented(opcode[0]);
-			registers->d = registers->e;
+			cpu->d = cpu->e;
 			break;
 		case 0x54: // MOV D,H
 			unimplemented(opcode[0]);
-			registers->d = registers->h;
+			cpu->d = cpu->h;
 			break;
 		case 0x55: // MOV D,L
 			unimplemented(opcode[0]);
-			registers->d = registers->l;
+			cpu->d = cpu->l;
 			break;
 		case 0x56: // MOV D,M
 		{
-			uint8_t adr = (registers->h << 8) | registers->l;
-			registers->d = cpu->ram[adr];
+			uint8_t adr = (cpu->h << 8) | cpu->l;
+			cpu->d = cpu->ram[adr];
 			break;
 		}
 		case 0x57: // MOV D,A
 			unimplemented(opcode[0]);
-			registers->d = registers->a;
+			cpu->d = cpu->a;
 			break;
 
 		case 0x58: // MOV E,B
 			unimplemented(opcode[0]);
-			registers->e = registers->b;
+			cpu->e = cpu->b;
 			break;
 		case 0x59: // MOV E,C
 			unimplemented(opcode[0]);
-			registers->e = registers->c;
+			cpu->e = cpu->c;
 			break;
 		case 0x5a: // MOV E,D
 			unimplemented(opcode[0]);
-			registers->e = registers->d;
+			cpu->e = cpu->d;
 			break;
 		case 0x5b: // MOV E,E
 			unimplemented(opcode[0]);
-			registers->e = registers->e;
+			cpu->e = cpu->e;
 			break;
 		case 0x5c: // MOV E,H
 			unimplemented(opcode[0]);
-			registers->e = registers->h;
+			cpu->e = cpu->h;
 			break;
 		case 0x5d: // MOV E,L
 			unimplemented(opcode[0]);
-			registers->e = registers->l;
+			cpu->e = cpu->l;
 			break;
 		case 0x5e: // MOV E,M
 		{
-			uint16_t adr = (registers->h << 8) | registers->l;
-			registers->e = cpu->ram[adr];
+			uint16_t adr = (cpu->h << 8) | cpu->l;
+			cpu->e = cpu->ram[adr];
 			break;
 		}
 		case 0x5f: // MOV E,A
 			unimplemented(opcode[0]);
-			registers->e = registers->a;
+			cpu->e = cpu->a;
 			break;
 
 		case 0x60: // MOV H,B
 			unimplemented(opcode[0]);
-			registers->h = registers->b;
+			cpu->h = cpu->b;
 			break;
 		case 0x61: // MOV H,C
 			unimplemented(opcode[0]);
-			registers->h = registers->c;
+			cpu->h = cpu->c;
 			break;
 		case 0x62: // MOV H,D
 			unimplemented(opcode[0]);
-			registers->h = registers->d;
+			cpu->h = cpu->d;
 			break;
 		case 0x63: // MOV H,E
 			unimplemented(opcode[0]);
-			registers->h = registers->e;
+			cpu->h = cpu->e;
 			break;
 		case 0x64: // MOV H,H
 			unimplemented(opcode[0]);
-			registers->h = registers->h;
+			cpu->h = cpu->h;
 			break;
 		case 0x65: // MOV H,L
 			unimplemented(opcode[0]);
-			registers->h = registers->l;
+			cpu->h = cpu->l;
 			break;
 		case 0x66: // MOV H,M
 		{
-			uint16_t adr = (registers->h << 8) | registers->l;
-			registers->h = cpu->ram[adr];
+			uint16_t adr = (cpu->h << 8) | cpu->l;
+			cpu->h = cpu->ram[adr];
 			break;
 		}
 		case 0x67: // MOV H,A
 			unimplemented(opcode[0]);
-			registers->h = registers->a;
+			cpu->h = cpu->a;
 			break;
 
 		case 0x68: // MOV L,B
 			unimplemented(opcode[0]);
-			registers->l = registers->b;
+			cpu->l = cpu->b;
 			break;
 		case 0x69: // MOV L,C
 			unimplemented(opcode[0]);
-			registers->l = registers->c;
+			cpu->l = cpu->c;
 			break;
 		case 0x6a: // MOV L,D
 			unimplemented(opcode[0]);
-			registers->l = registers->d;
+			cpu->l = cpu->d;
 			break;
 		case 0x6b: // MOV L,E
 			unimplemented(opcode[0]);
-			registers->l = registers->e;
+			cpu->l = cpu->e;
 			break;
 		case 0x6c: // MOV L,H
 			unimplemented(opcode[0]);
-			registers->l = registers->h;
+			cpu->l = cpu->h;
 			break;
 		case 0x6d: // MOV L,L
 			unimplemented(opcode[0]);
-			registers->l = registers->l;
+			cpu->l = cpu->l;
 			break;
 		case 0x6e: // MOV L,M
 			unimplemented(opcode[0]);
 			break;
 		case 0x6f: // MOV L,A
-			registers->l = registers->a;
+			cpu->l = cpu->a;
 			break;
 
 		case 0x70: // MOV M,B
@@ -571,73 +602,67 @@ emulate(struct CPU *cpu) {
 			break;
 		case 0x77: // MOV M,A
 		{
-			uint16_t adr = (registers->h << 8) | registers->l;
-			cpu->ram[adr] = registers->a;
+			uint16_t adr = (cpu->h << 8) | cpu->l;
+			cpu->ram[adr] = cpu->a;
 			break;
 		}
 		case 0x78: // MOV A,B
 			unimplemented(opcode[0]);
-			registers->a = registers->b;
+			cpu->a = cpu->b;
 			break;
 		case 0x79: // MOV A,C
 			unimplemented(opcode[0]);
-			registers->a = registers->c;
+			cpu->a = cpu->c;
 			break;
 		case 0x7a: // MOV A,D
-			registers->a = registers->d;
+			cpu->a = cpu->d;
 			break;
 		case 0x7b: // MOV A,E
-			registers->a = registers->e;
+			cpu->a = cpu->e;
 			break;
 		case 0x7c: // MOV A,H
-			registers->a = registers->h;
+			cpu->a = cpu->h;
 			break;
 		case 0x7d: // MOV A,L
 			unimplemented(opcode[0]);
-			registers->a = registers->l;
+			cpu->a = cpu->l;
 			break;
 		case 0x7e: // MOV A,H
-			registers->a = registers->h;
+			cpu->a = cpu->h;
 			break;
 		case 0x7f: // MOV A,H
 			unimplemented(opcode[0]);
-			registers->a = registers->h;
+			cpu->a = cpu->h;
 			break;
 
 		case 0x80: // ADD B
 			unimplemented(opcode[0]);
-			add(registers->b, cpu);
 			break;
 		case 0x81: // ADD C
 			unimplemented(opcode[0]);
-			add(registers->c, cpu);
 			break;
 		case 0x82: // ADD D
 			unimplemented(opcode[0]);
-			add(registers->d, cpu);
 			break;
 		case 0x83: // ADD E
 			unimplemented(opcode[0]);
-			add(registers->e, cpu);
 			break;
 		case 0x84: // ADD H
 			unimplemented(opcode[0]);
-			add(registers->h, cpu);
 			break;
 		case 0x85: // ADD L
 			unimplemented(opcode[0]);
-			add(registers->l, cpu);
 			break;
 		case 0x86: // ADD M
 		{
 			unimplemented(opcode[0]);
-			uint16_t adr = (registers->h << 8) | registers->l;
-			add(cpu->ram[adr], cpu);
+			uint16_t adr = (cpu->h << 8) | cpu->l;
+
 			break;
 		}
 		case 0x87: // ADD A
 			unimplemented(opcode[0]);
-			add(registers->a, cpu);
+
 			break;
 
 		case 0x88: // ADC B
@@ -717,8 +742,8 @@ emulate(struct CPU *cpu) {
 
 		case 0xa0: // ANA B
 			unimplemented(opcode[0]);
-			registers->a &= registers->b;
-			set_flags(cpu, registers->a, SIGN | ZERO | PARITY);
+			cpu->a &= cpu->b;
+			// set_flags(cpu, cpu->a, SIGN | ZERO | PARITY);
 			cpu->flags.c = 0;
 			break;
 		case 0xa1: // ANA C
@@ -740,8 +765,8 @@ emulate(struct CPU *cpu) {
 			unimplemented(opcode[0]);
 			break;
 		case 0xa7: // ANA A
-			registers->a &= registers->a;
-			set_flags(cpu, registers->a, SIGN | ZERO | PARITY);
+			cpu->a &= cpu->a;
+			set_flags(cpu, cpu->a, 8, SIGN | ZERO | PARITY);
 			cpu->flags.c = 0;
 			break;
 
@@ -767,8 +792,8 @@ emulate(struct CPU *cpu) {
 			unimplemented(opcode[0]);
 			break;
 		case 0xaf: // XRA A
-			registers->a ^= registers->a;
-			set_flags(cpu, registers->a, SIGN | ZERO | PARITY);
+			cpu->a ^= cpu->a;
+			// set_flags(cpu, cpu->a, SIGN | ZERO | PARITY);
 			cpu->flags.c = 0;
 			break;
 
@@ -827,69 +852,68 @@ emulate(struct CPU *cpu) {
 			break;
 		case 0xc1: // POP B
 		{
-			registers->b = cpu->ram[registers->sp + 1];
-			registers->c = cpu->ram[registers->sp];
-			registers->sp += 2;
+			uint16_t popped = pop(cpu);
+			cpu->b = (popped & 0xff00) >> 8;
+			cpu->c = popped & 0xff;
 			break;
 		}
 		case 0xc2: // JNZ a16
-			if (cpu->flags.z) {
-				registers->pc += 2;
+			if (cpu->flags.z == 1) {
+				cpu->pc += 2;
 				break;
 			}
 
-			registers->pc = (opcode[2] << 8) | opcode[1];
-
+			cpu->pc = (opcode[2] << 8) | opcode[1];
 			break;
 		case 0xc3: // JMP a16
-			registers->pc = (opcode[2] << 8) | opcode[1];
-			 // don't skip the line we jumped to
+			cpu->pc = (opcode[2] << 8) | opcode[1];
 			break;
 		case 0xc4: // CNZ a16
 			unimplemented(opcode[0]);
 			break;
 		case 0xc5: // PUSH B
-			cpu->ram[registers->sp - 2] = registers->c;
-			cpu->ram[registers->sp - 1] = registers->b;
-			registers->sp -= 2;
+			push(cpu, cpu->b << 8 | cpu->c);
 			break;
 		case 0xc6: // ADI d8
-			add(opcode[1], cpu);
-			registers->pc++;
+		{
+			uint16_t res = cpu->a + opcode[1];
+			set_flags(cpu, res, 8, ZERO | PARITY | SIGN | CARRY);
+
+			cpu->a = res & 0xff;
+			cpu->pc++;
 			break;
+		}
 		case 0xc7: // RST 0
 		{
 			unimplemented(opcode[0]);
-			uint16_t adr = registers->pc + 3;
-			cpu->ram[registers->sp-1] = (adr >> 8) & 0xff;
-			cpu->ram[registers->sp-2] = adr & 0xff;
-			registers->sp -= 2;
-			registers->pc = 0x0000;
+			uint16_t adr = cpu->pc + 3;
+			cpu->ram[cpu->sp-1] = (adr >> 8) & 0xff;
+			cpu->ram[cpu->sp-2] = adr & 0xff;
+			cpu->sp -= 2;
+			cpu->pc = 0x0000;
 
 			break;
 		}
 		case 0xc8: // RZ
 			unimplemented(opcode[0]);
 			if (!cpu->flags.z) {
-				registers->pc += 2;
+				cpu->pc += 2;
 				break;
 			}
-			registers->pc = cpu->ram[registers->sp] | (cpu->ram[registers->sp + 1] << 8);
+			cpu->pc = cpu->ram[cpu->sp] | (cpu->ram[cpu->sp + 1] << 8);
 
 			break;
 		case 0xc9: // RET
-			registers->pc = cpu->ram[registers->sp + 1] << 8 | cpu->ram[registers->sp];
-			registers->sp += 2;
-
+			cpu->pc = pop(cpu);
 			break;
 		case 0xca: // JZ a16
 			unimplemented(opcode[0]);
 			if (cpu->flags.z != 1) {
-				registers->pc += 2;
+				cpu->pc += 2;
 				break;
 			}
 
-			registers->pc = (opcode[2] << 8) | opcode[1];
+			cpu->pc = (opcode[2] << 8) | opcode[1];
 
 			break;
 		case 0xcb: // 0xcb ILLEGAL
@@ -899,37 +923,31 @@ emulate(struct CPU *cpu) {
 		case 0xcc: // CZ a16
 			unimplemented(opcode[0]);
 			if (!cpu->flags.z) {
-				registers->pc += 2;
+				cpu->pc += 2;
 				break;
 			}
-			uint16_t adr = registers->pc + 3;
-			cpu->ram[registers->sp-1] = (adr >> 8) & 0xff;
-			cpu->ram[registers->sp-2] = adr & 0xff;
-			registers->sp -= 2;
-			registers->pc = (opcode[2] << 8) | opcode[1];
+			uint16_t adr = cpu->pc + 3;
+			cpu->ram[cpu->sp-1] = (adr >> 8) & 0xff;
+			cpu->ram[cpu->sp-2] = adr & 0xff;
+			cpu->sp -= 2;
+			cpu->pc = (opcode[2] << 8) | opcode[1];
 
 			break;
 		case 0xcd: // CALL a16
-		{
-			uint16_t adr = registers->pc + 3;
-			cpu->ram[registers->sp-1] = (adr >> 8) & 0xff;
-			cpu->ram[registers->sp-2] = adr & 0xff;
-			registers->sp -= 2;
-			registers->pc = (opcode[2] << 8) | opcode[1];
-
+			push(cpu, cpu->pc + 2);
+			cpu->pc = (opcode[2] << 8) | opcode[1];
 			break;
-		}
 		case 0xce: // ACI d8
 			unimplemented(opcode[0]);
 			break;
 		case 0xcf: // RST 1
 		{
 			unimplemented(opcode[0]);
-			uint16_t adr = registers->pc + 3;
-			cpu->ram[registers->sp-1] = (adr >> 8) & 0xff;
-			cpu->ram[registers->sp-2] = adr & 0xff;
-			registers->sp -= 2;
-			registers->pc = 0x0008;
+			uint16_t adr = cpu->pc + 3;
+			cpu->ram[cpu->sp-1] = (adr >> 8) & 0xff;
+			cpu->ram[cpu->sp-2] = adr & 0xff;
+			cpu->sp -= 2;
+			cpu->pc = 0x0008;
 
 			break;
 		}
@@ -937,36 +955,37 @@ emulate(struct CPU *cpu) {
 			unimplemented(opcode[0]);
 			break;
 		case 0xd1: // POP D
-			registers->d = cpu->ram[registers->sp + 1];
-			registers->e = cpu->ram[registers->sp];
-			registers->sp += 2;
+		{
+			uint16_t popped = pop(cpu);
+			cpu->d = (popped & 0xff00) >> 8;
+			cpu->e = popped & 0xff;
 			break;
+		}
 		case 0xd2: // JNC a16
 			unimplemented(opcode[0]);
 			if (cpu->flags.c) {
-				registers->pc += 2;
+				cpu->pc += 2;
 				break;
 			}
 
-			registers->pc = (opcode[2] << 8) | opcode[1];
+			cpu->pc = (opcode[2] << 8) | opcode[1];
 
 			break;
 		// TODO: Reimplement later
 		case 0xd3: // OUT d8
 		{
 			/*unimplemented(opcode[0]);*/
+			/*unimplemented(opcode[0]);*/
 			/*uint8_t port = opcode[1];*/
-			/*registers->a = machineIN(cpu, port);*/
-			registers->pc++;
+			/*cpu->a = machineIN(cpu, port);*/
+			cpu->pc++;
 			break;
 		}
 		case 0xd4: // CNC a16
 			unimplemented(opcode[0]);
 			break;
 		case 0xd5: // PUSH D
-			cpu->ram[registers->sp - 2] = registers->e;
-			cpu->ram[registers->sp - 1] = registers->d;
-			registers->sp -= 2;
+			push(cpu, cpu->d << 8 | cpu->e);
 			break;
 		case 0xd6: // SUI d8
 			unimplemented(opcode[0]);
@@ -974,11 +993,11 @@ emulate(struct CPU *cpu) {
 		case 0xd7: // RST 2
 			unimplemented(opcode[0]);
 		{
-			uint16_t adr = registers->pc + 3;
-			cpu->ram[registers->sp-1] = (adr >> 8) & 0xff;
-			cpu->ram[registers->sp-2] = adr & 0xff;
-			registers->sp -= 2;
-			registers->pc = 0x0010;
+			uint16_t adr = cpu->pc + 3;
+			cpu->ram[cpu->sp-1] = (adr >> 8) & 0xff;
+			cpu->ram[cpu->sp-2] = adr & 0xff;
+			cpu->sp -= 2;
+			cpu->pc = 0x0010;
 
 			break;
 		}
@@ -992,11 +1011,11 @@ emulate(struct CPU *cpu) {
 		case 0xda: // JC a16
 			unimplemented(opcode[0]);
 			if (!cpu->flags.c) {
-				registers->pc += 2;
+				cpu->pc += 2;
 				break;
 			}
 
-			registers->pc = (opcode[2] << 8) | opcode[1];
+			cpu->pc = (opcode[2] << 8) | opcode[1];
 
 			break;
 		// TODO: Reimplement later
@@ -1004,8 +1023,8 @@ emulate(struct CPU *cpu) {
 		{
 			unimplemented(opcode[0]);
 			/*uint8_t port = opcode[1];*/
-			/*registers->a = machineOUT(cpu, port);*/
-			/*registers->pc++;*/
+			/*cpu->a = machineOUT(cpu, port);*/
+			/*cpu->pc++;*/
 			break;
 		}
 		case 0xdc: // CC a16
@@ -1021,11 +1040,11 @@ emulate(struct CPU *cpu) {
 		case 0xdf: // RST 3
 		{
 			unimplemented(opcode[0]);
-			uint16_t adr = registers->pc + 3;
-			cpu->ram[registers->sp-1] = (adr >> 8) & 0xff;
-			cpu->ram[registers->sp-2] = adr & 0xff;
-			registers->sp -= 2;
-			registers->pc = 0x0018;
+			uint16_t adr = cpu->pc + 3;
+			cpu->ram[cpu->sp-1] = (adr >> 8) & 0xff;
+			cpu->ram[cpu->sp-2] = adr & 0xff;
+			cpu->sp -= 2;
+			cpu->pc = 0x0018;
 
 			break;
 		}
@@ -1033,18 +1052,20 @@ emulate(struct CPU *cpu) {
 			unimplemented(opcode[0]);
 			break;
 		case 0xe1: // POP H
-			registers->h = cpu->ram[registers->sp + 1];
-			registers->l = cpu->ram[registers->sp];
-			registers->sp += 2;
+		{
+			uint16_t popped = pop(cpu);
+			cpu->h = (popped & 0xff00) >> 8;
+			cpu->l = popped & 0xff;
 			break;
+		}
 		case 0xe2: // JPO a16
 			unimplemented(opcode[0]);
 			if (cpu->flags.p == 1) {
-				registers->pc += 2;
+				cpu->pc += 2;
 				break;
 			}
 
-			registers->pc = (opcode[2] << 8) | opcode[1];
+			cpu->pc = (opcode[2] << 8) | opcode[1];
 
 			break;
 		case 0xe3: // XTHL
@@ -1054,24 +1075,22 @@ emulate(struct CPU *cpu) {
 			unimplemented(opcode[0]);
 			break;
 		case 0xe5: // PUSH H
-			cpu->ram[registers->sp - 2] = registers->l;
-			cpu->ram[registers->sp - 1] = registers->h;
-			registers->sp -= 2;
+			push(cpu, cpu->h << 8 | cpu->l);
 			break;
 		case 0xe6: // ANI d8
-			registers->a &= opcode[1];
-			set_flags(cpu, registers->a, SIGN | ZERO | PARITY);
+			cpu->a &= opcode[1];
+			set_flags(cpu, cpu->a, 8, SIGN | ZERO | PARITY);
 			cpu->flags.c = 0;
-			registers->pc++;
+			cpu->pc++;
 			break;
 		case 0xe7: // RST 4
 		{
 			unimplemented(opcode[0]);
-			uint16_t adr = registers->pc + 3;
-			cpu->ram[registers->sp-1] = (adr >> 8) & 0xff;
-			cpu->ram[registers->sp-2] = adr & 0xff;
-			registers->sp -= 2;
-			registers->pc = 0x0020;
+			uint16_t adr = cpu->pc + 3;
+			cpu->ram[cpu->sp-1] = (adr >> 8) & 0xff;
+			cpu->ram[cpu->sp-2] = adr & 0xff;
+			cpu->sp -= 2;
+			cpu->pc = 0x0020;
 
 			break;
 		}
@@ -1084,23 +1103,23 @@ emulate(struct CPU *cpu) {
 		case 0xea: // JPE a16
 			unimplemented(opcode[0]);
 			if (cpu->flags.p == 0) {
-				registers->pc += 2;
+				cpu->pc += 2;
 				break;
 			}
 
-			registers->pc = (opcode[2] << 8) | opcode[1];
+			cpu->pc = (opcode[2] << 8) | opcode[1];
 
 			break;
 		case 0xeb: // XCHG
 		{
-			uint8_t d = registers->d;
-			uint8_t e = registers->e;
+			uint8_t d = cpu->d;
+			uint8_t e = cpu->e;
 
-			registers->d = registers->h;
-			registers->e = registers->l;
+			cpu->d = cpu->h;
+			cpu->e = cpu->l;
 
-			registers->h = d;
-			registers->l = e;
+			cpu->h = d;
+			cpu->l = e;
 			break;
 		}
 		case 0xec: // CPE a16
@@ -1116,11 +1135,11 @@ emulate(struct CPU *cpu) {
 		case 0xef: // RST 5
 		{
 			unimplemented(opcode[0]);
-			uint16_t adr = registers->pc + 3;
-			cpu->ram[registers->sp-1] = (adr >> 8) & 0xff;
-			cpu->ram[registers->sp-2] = adr & 0xff;
-			registers->sp -= 2;
-			registers->pc = 0x0028;
+			uint16_t adr = cpu->pc + 3;
+			cpu->ram[cpu->sp-1] = (adr >> 8) & 0xff;
+			cpu->ram[cpu->sp-2] = adr & 0xff;
+			cpu->sp -= 2;
+			cpu->pc = 0x0028;
 
 			break;
 		}
@@ -1128,22 +1147,24 @@ emulate(struct CPU *cpu) {
 			unimplemented(opcode[0]);
 			break;
 		case 0xf1: // POP PSW
-			registers->a = cpu->ram[registers->sp + 1];
-			uint8_t flag = cpu->ram[registers->sp];
+		{
+			uint16_t popped = pop(cpu);
+			cpu->a = (popped & 0xff00) >> 8;
+			uint8_t flag = popped & 0xff;
 			cpu->flags.s = (flag & (0x01 << 7)) >> 7;
 			cpu->flags.z = (flag & (0x01 << 6)) >> 6;
 			cpu->flags.p = (flag & (0x01 << 2))>> 2;
 			cpu->flags.c = (flag & (0x01 << 0)) >> 0;
-			registers->sp += 2;
 			break;
+		}
 		case 0xf2: // JP a16
 			unimplemented(opcode[0]);
 			if (cpu->flags.s == 1) {
-				registers->pc += 2;
+				cpu->pc += 2;
 				break;
 			}
-			registers->pc = (opcode[2] << 8) | opcode[1];
-			registers->pc += 2;
+			cpu->pc = (opcode[2] << 8) | opcode[1];
+			cpu->pc += 2;
 			break;
 		case 0xf3: // DI
 			unimplemented(opcode[0]);
@@ -1154,9 +1175,7 @@ emulate(struct CPU *cpu) {
 		case 0xf5: // PUSH PSW
 		{
 			uint8_t flags = cpu->flags.s << 7 | cpu->flags.z << 6 | cpu->flags.p << 2 | cpu->flags.c;
-			cpu->ram[registers->sp - 2] = flags;
-			cpu->ram[registers->sp - 1] = registers->a;
-			registers->sp -= 2;
+			push(cpu, (cpu->a << 8) | flags);
 			break;
 		}
 		case 0xf6: // ORI d8
@@ -1165,11 +1184,11 @@ emulate(struct CPU *cpu) {
 		case 0xf7: // RST 6
 		{
 			unimplemented(opcode[0]);
-			uint16_t adr = registers->pc + 3;
-			cpu->ram[registers->sp-1] = (adr >> 8) & 0xff;
-			cpu->ram[registers->sp-2] = adr & 0xff;
-			registers->sp -= 2;
-			registers->pc = 0x0030;
+			uint16_t adr = cpu->pc + 3;
+			cpu->ram[cpu->sp-1] = (adr >> 8) & 0xff;
+			cpu->ram[cpu->sp-2] = adr & 0xff;
+			cpu->sp -= 2;
+			cpu->pc = 0x0030;
 
 			break;
 		}
@@ -1177,17 +1196,17 @@ emulate(struct CPU *cpu) {
 			unimplemented(opcode[0]);
 			break;
 		case 0xf9: // SPHL
-			printf("%02x\n", registers->pc);
+			printf("%02x\n", cpu->pc);
 			unimplemented(opcode[0]);
 			break;
 		case 0xfa: // JM a16
 			unimplemented(opcode[0]);
 			if (cpu->flags.s == 0) {
-				registers->pc += 2;
+				cpu->pc += 2;
 				break;
 			}
-			registers->pc = (opcode[2] << 8) | opcode[1];
-			registers->pc += 2;
+			cpu->pc = (opcode[2] << 8) | opcode[1];
+			cpu->pc += 2;
 			break;
 		case 0xfb: // EI
 			cpu->interrupts = 1;
@@ -1201,42 +1220,46 @@ emulate(struct CPU *cpu) {
 
 		case 0xfe: // CPI d8
 		{
-			uint8_t res = registers->a - opcode[1];
-			set_flags(cpu, res, SIGN | ZERO | PARITY | CARRY);
-			cpu->flags.c = (registers->a < opcode[1]);
+			uint8_t res = cpu->a - opcode[1];
+			set_flags(cpu, res, 8, SIGN | ZERO | PARITY);
+			cpu->flags.c = (cpu->a < opcode[1]);
+			cpu->pc++;
 			break;
 		}
 		case 0xff: // RST 7
 		{
 			unimplemented(opcode[0]);
-			uint16_t adr = registers->pc + 3;
-			cpu->ram[registers->sp-1] = (adr >> 8) & 0xff;
-			cpu->ram[registers->sp-2] = adr & 0xff;
-			registers->sp -= 2;
-			registers->pc = 0x0038;
+			uint16_t adr = cpu->pc + 3;
+			cpu->ram[cpu->sp-1] = (adr >> 8) & 0xff;
+			cpu->ram[cpu->sp-2] = adr & 0xff;
+			cpu->sp -= 2;
+			cpu->pc = 0x0038;
 
 			break;
 		}
 	}
+	print_cpu_state(cpu);
+	printf("next: ");
+	print_opcode(cpu->ram, cpu->pc);
+	printf("\n");
 
 	return 0;
 }
 
 void print_cpu_state(struct CPU *cpu) {
-	struct Registers *regs = &cpu->registers;
 	struct Flags *flags = &cpu->flags;
 
-	printf("->%02x\n", cpu->ram[regs->pc]);
-	printf("a:  %02x\n", regs->a);
-	printf("b:  %02x\n", regs->b);
-	printf("c:  %02x\n", regs->c);
-	printf("d:  %02x\n", regs->d);
-	printf("e:  %02x\n", regs->e);
-	printf("h:  %02x\n", regs->h);
-	printf("l:  %02x\n", regs->l);
-	printf("m:  %02x\n", cpu->ram[(regs->h << 8) | regs->l]);
-	printf("pc: %04x\n", regs->pc);
-	printf("sp: %04x\n", regs->sp);
+	/*printf("->%02x\n", cpu->ram[cpu->pc]);*/
+	printf("a:  %02x\n", cpu->a);
+	printf("b:  %02x\n", cpu->b);
+	printf("c:  %02x\n", cpu->c);
+	printf("d:  %02x\n", cpu->d);
+	printf("e:  %02x\n", cpu->e);
+	printf("h:  %02x\n", cpu->h);
+	printf("l:  %02x\n", cpu->l);
+	printf("m:  %02x\n", cpu->ram[(cpu->h << 8) | cpu->l]);
+	printf("pc: %04x\n", cpu->pc);
+	printf("sp: %04x\n", cpu->sp);
 
 	printf("SZKA-PVC\n%01x%01x%01x%01x%01x%01x%01x%01x\n",
 		cpu->flags.s,
@@ -1248,7 +1271,5 @@ void print_cpu_state(struct CPU *cpu) {
 		cpu->flags.v,
 		cpu->flags.c);
 
-	printf("stack: %02x %02x\n", cpu->ram[regs->sp], cpu->ram[regs->sp + 1]);
-
-	printf("\n");
+	printf("stack: %02x %02x\n", cpu->ram[cpu->sp], cpu->ram[cpu->sp + 1]);
 }

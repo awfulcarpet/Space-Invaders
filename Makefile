@@ -18,7 +18,7 @@ OBJ = \
       $(OUTDIR)/main.o \
 	  $(OUTDIR)/cpu.o \
 	  $(OUTDIR)/dissasembler.o \
-	  $(OUTDIR)/machine.o \
+	  # $(OUTDIR)/machine.o \
 
 all: $(NAME)
 
