@@ -104,6 +104,12 @@ set_psw(struct Flags *flags, uint8_t psw) {
 	flags->c = psw & 0x1;
 }
 
+void
+generate_interrupt(struct CPU *cpu, int interrupt_num) {
+	push(cpu, cpu->pc >> 8, cpu->pc & 0xff);
+	cpu->pc = 8 * interrupt_num;
+}
+
 unsigned char cycles8080[] = {
 	4, 10, 7, 5, 5, 5, 7, 4, 4, 10, 7, 5, 5, 5, 7, 4, //0x00..0x0f
 	4, 10, 7, 5, 5, 5, 7, 4, 4, 10, 7, 5, 5, 5, 7, 4, //0x10..0x1f
