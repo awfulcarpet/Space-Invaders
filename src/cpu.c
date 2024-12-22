@@ -5,6 +5,20 @@
 #include "cpu.h"
 #include "dissasemble.h"
 
+uint8_t
+in(struct CPU *cpu, uint8_t port) {
+	return *cpu->iports[port];
+}
+
+void
+out(struct CPU *cpu, uint8_t port) {
+	*cpu->oports[port] = cpu->a;
+
+	if (port == 4) {
+		cpu->shift_written = 1;
+	}
+}
+
 int
 map(struct CPU *cpu, FILE *f) {
 	if (f == NULL) {
@@ -81,6 +95,7 @@ get_psw(struct Flags *flags) {
 	psw |= flags->c << 0;
 	return psw;
 }
+
 static void
 set_psw(struct Flags *flags, uint8_t psw) {
 	flags->s = (psw >> 7) & 0x1;
@@ -1056,8 +1071,8 @@ emulate(struct CPU *cpu) {
 			break;
 		// TODO: Reimplement later
 		case 0xd3: // OUT d8
+			out(cpu, opcode[1]);
 			cpu->pc++;
-
 			break;
 		case 0xd4: // CNC a16
 			unimplemented(opcode[0]);
@@ -1099,8 +1114,8 @@ emulate(struct CPU *cpu) {
 			break;
 		// TODO: Reimplement later
 		case 0xdb: // IN d8
-			unimplemented(opcode[0]);
-
+			cpu->a = in(cpu, opcode[1]);
+			cpu->pc++;
 			break;
 		case 0xdc: // CC a16
 			unimplemented(opcode[0]);
