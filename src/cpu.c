@@ -135,9 +135,6 @@ unsigned char cycles8080[] = {
 int
 emulate(struct CPU *cpu) {
 	uint8_t *opcode = &cpu->ram[cpu->pc];
-
-	get_opname(cpu->ram, cpu->pc);
-
 	cpu->pc++;
 	switch (*opcode) {
 		case 0x00: // NOP
@@ -213,10 +210,9 @@ emulate(struct CPU *cpu) {
 			break;
 		case 0x0f: // RRC
 		{
-			uint8_t tmp = cpu->a;
-			cpu->a = ((tmp & 1) << 7) | (tmp >> 1);
-			cpu->flags.c = ((tmp & 1) == 1);
-
+			uint8_t x = cpu->a;
+			cpu->a = ((x & 1) << 7) | (x >> 1);
+			cpu->flags.c = ((x & 1) == 1);
 			break;
 		}
 		case 0x10: // 0x10 ILLEGAL
@@ -230,9 +226,11 @@ emulate(struct CPU *cpu) {
 
 			break;
 		case 0x12: // STAX D
-			unimplemented(opcode[0]);
-			unimplemented(opcode[0]);
+		{
+			uint16_t adr = cpu->d << 8 | cpu->e;
+			cpu->ram[adr] = cpu->a;
 			break;
+		}
 		case 0x13: // INX  D
 		{
             uint16_t de = (cpu->d << 8) | cpu->e;
@@ -243,10 +241,12 @@ emulate(struct CPU *cpu) {
 			break;
 		}
 		case 0x14: // INR  D
-			unimplemented(opcode[0]);
+			cpu->d++;
+			flagsZSP(cpu, cpu->d);
 			break;
 		case 0x15: // DCR  D
-			unimplemented(opcode[0]);
+			cpu->d--;
+			flagsZSP(cpu, cpu->d);
 			break;
 		case 0x16: // MVI  D,d8
 			unimplemented(opcode[0]);
@@ -293,8 +293,12 @@ emulate(struct CPU *cpu) {
 
 			break;
 		case 0x1f: // RAR
-			unimplemented(opcode[0]);
+		{
+			uint8_t x = cpu->a;
+			cpu->a = (cpu->flags.c << 7) | (x >> 1);
+			cpu->flags.c = (1 == (x & 1));
 			break;
+		}
 		case 0x20: // 0x20 ILLEGAL
 			unimplemented(opcode[0]);
 			break;
@@ -460,7 +464,6 @@ emulate(struct CPU *cpu) {
 			cpu->b = cpu->e;
 			break;
 		case 0x44: // MOV B,H
-			unimplemented(opcode[0]);
 			cpu->b = cpu->h;
 			break;
 		case 0x45: // MOV B,L
@@ -1028,15 +1031,22 @@ emulate(struct CPU *cpu) {
 			break;
 		case 0xcd: // CALL a16
 		{
+#ifdef TEST
+			if (5 == ((opcode[2] << 8) | opcode[1])) {
+				if (cpu->c == 9) {
+					uint16_t offset = (cpu->d << 8) | cpu->e;
+					char *str = &cpu->ram[offset+3];
+					while (*str != '$')
+						printf("%c", *str++);
+					printf("\n");
+				} else if (cpu->c == 2) {
+					printf("print char routine called\n");
+				}
+			} else if (0 == ((opcode[2] << 8) | opcode[1])) {
+				exit(0);
+			}
+#endif
 			call(cpu, opcode);
-
-			/*unimplemented(opcode[0]);*/
-			/*uint16_t adr = cpu->pc + 3;*/
-			/*cpu->ram[cpu->sp-1] = (adr >> 8) & 0xff;*/
-			/*cpu->ram[cpu->sp-2] = adr & 0xff;*/
-			/*cpu->sp -= 2;*/
-			/*cpu->pc = (opcode[2] << 8) | opcode[1];*/
-
 			break;
 		}
 		case 0xce: // ACI d8

@@ -21,6 +21,11 @@ $(OUTDIR)/%.o: src/%.c
 $(NAME): $(OBJ)
 	$(CC) -o $(OUTDIR)/$@$(EXT) $^ $(LDLIBS) $(LDFLAGS)
 
+tests: clean
+	@mkdir -p $(OUTDIR)
+	$(CC) -o $(OUTDIR)/tests -D TEST $(CFLAGS) $(LDLIBS) $(LDFLAGS) src/cpu.c tests/emulator.c
+	$(OUTDIR)/tests
+
 release: $(NAME)
 	strip $(OUTDIR)/$(NAME)
 
