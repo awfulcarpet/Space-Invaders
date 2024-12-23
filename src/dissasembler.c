@@ -145,7 +145,7 @@ get_opname(unsigned char *buf, int pc)
 		case 0x7b: printf("MOV A,E"); break;
 		case 0x7c: printf("MOV A,H"); break;
 		case 0x7d: printf("MOV A,L"); break;
-		case 0x7e: printf("MOV A,H"); break;
+		case 0x7e: printf("MOV A,M"); break;
 		case 0x7f: printf("MOV A,H"); break;
 
 		case 0x80: printf("ADD B"); break;
