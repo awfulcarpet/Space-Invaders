@@ -684,8 +684,7 @@ emulate(struct CPU *cpu) {
 		}
 
 		case 0x76: // HLT
-			unimplemented(opcode[0]);
-			return 1;
+			exit(1);
 			break;
 		case 0x77: // MOV M,A
 		{
@@ -1331,8 +1330,6 @@ emulate(struct CPU *cpu) {
 
 			cpu->h = d;
 			cpu->l = e;
-
-
 			break;
 		}
 		case 0xec: // CPE a16
