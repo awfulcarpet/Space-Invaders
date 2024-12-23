@@ -197,7 +197,6 @@ emulate(struct CPU *cpu) {
 			cpu->h = res >> 8;
 			cpu->l = res & 0xff;
 			cpu->flags.c = (res >> 16) & 1;
-
 			break;
 		}
 		case 0x0a: // LDAX B
@@ -239,9 +238,7 @@ emulate(struct CPU *cpu) {
 		case 0x11: // LXI  D,d16
 			cpu->e = opcode[1];
 			cpu->d = opcode[2];
-
 			cpu->pc += 2;
-
 			break;
 		case 0x12: // STAX D
 		{
@@ -445,7 +442,6 @@ emulate(struct CPU *cpu) {
 			uint16_t adr = (cpu->h << 8) | cpu->l;
 			cpu->ram[adr] = opcode[1];
 			cpu->pc++;
-
 			break;
 		}
 		case 0x37: // STC
@@ -469,7 +465,6 @@ emulate(struct CPU *cpu) {
 			uint16_t adr = (opcode[2] << 8) | opcode[1];
 			cpu->a = cpu->ram[adr];
 			cpu->pc += 2;
-
 			break;
 		}
 		case 0x3b: // DCX  SP
@@ -682,7 +677,6 @@ emulate(struct CPU *cpu) {
 			cpu->ram[adr] = cpu->l;
 			break;
 		}
-
 		case 0x76: // HLT
 			exit(1);
 			break;
@@ -785,8 +779,8 @@ emulate(struct CPU *cpu) {
 			uint16_t adr = cpu->h << 8 | cpu->l;
 			cpu->a += cpu->ram[adr] + cpu->flags.c;
 			flagsZSPC(cpu, cpu->a + cpu->ram[adr] + cpu->flags.c);
-		}
 			break;
+		}
 		case 0x8f: // ADC A
 			cpu->a += cpu->a + cpu->flags.c;
 			flagsZSPC(cpu, cpu->a + cpu->a + cpu->flags.c);
@@ -990,7 +984,6 @@ emulate(struct CPU *cpu) {
 			flagsZSP(cpu, cpu->a);
 			cpu->flags.c = 0;
 			break;
-
 		case 0xb8: // CMP B
 			flagsZSPC(cpu, cpu->a - cpu->b);
 			break;
@@ -1018,7 +1011,6 @@ emulate(struct CPU *cpu) {
 		case 0xbf: // CMP A
 			flagsZSPC(cpu, cpu->a - cpu->a);
 			break;
-
 		case 0xc0: // RNZ
 			if (cpu->flags.z == 0)
 				ret(cpu);
@@ -1032,18 +1024,13 @@ emulate(struct CPU *cpu) {
 			break;
 		}
 		case 0xc2: // JNZ a16
-			if (cpu->flags.z == 0) {
+			if (cpu->flags.z == 0)
 				cpu->pc = (opcode[2] << 8) | opcode[1];
-
-			} else {
+			else
 				cpu->pc += 2;
-
-			}
-
 			break;
 		case 0xc3: // JMP a16
 			cpu->pc = (opcode[2] << 8) | opcode[1];
-
 			break;
 		case 0xc4: // CNZ a16
 			if (cpu->flags.z == 0)
@@ -1053,7 +1040,6 @@ emulate(struct CPU *cpu) {
 			break;
 		case 0xc5: // PUSH B
 			push(cpu, cpu->b, cpu->c);
-
 			break;
 		case 0xc6: // ADI d8
 		{
@@ -1062,7 +1048,6 @@ emulate(struct CPU *cpu) {
 			cpu->flags.c = tmp > 0xff;
 			cpu->a += opcode[1];
 			cpu->pc++;
-
 			break;
 		}
 		case 0xc7: // RST 0
@@ -1084,13 +1069,11 @@ emulate(struct CPU *cpu) {
 		case 0xcb: // 0xcb ILLEGAL
 			unimplemented(opcode[0]);
 			break;
-
 		case 0xcc: // CZ a16
 			if (cpu->flags.z)
 				call(cpu, opcode);
 			else
 				cpu->pc += 2;
-
 			break;
 		case 0xcd: // CALL a16
 		{
@@ -1137,8 +1120,6 @@ emulate(struct CPU *cpu) {
 			uint16_t val = pop(cpu);
 			cpu->d = val >> 8;
 			cpu->e = val & 0xff;
-
-
 			break;
 		}
 		case 0xd2: // JNC a16
@@ -1146,7 +1127,6 @@ emulate(struct CPU *cpu) {
 				cpu->pc = (opcode[2] << 8) | opcode[1];
 			else
 				cpu->pc += 2;
-
 			break;
 		case 0xd3: // OUT d8
 			out(cpu, opcode[1]);
@@ -1160,7 +1140,6 @@ emulate(struct CPU *cpu) {
 			break;
 		case 0xd5: // PUSH D
 			push(cpu, cpu->d, cpu->e);
-
 			break;
 		case 0xd6: // SUI d8
 		{
@@ -1169,7 +1148,6 @@ emulate(struct CPU *cpu) {
 			cpu->flags.c = cpu->a < opcode[1];
 			cpu->a = tmp;
 			cpu->pc++;
-
 			break;
 		}
 		case 0xd7: // RST 2
@@ -1182,15 +1160,12 @@ emulate(struct CPU *cpu) {
 		case 0xd9: // 0xd9 ILLEGAL
 			unimplemented(opcode[0]);
 			break;
-
 		case 0xda: // JC a16
 			if (cpu->flags.c)
 				cpu->pc = (opcode[2] << 8) | opcode[1];
 			else
 				cpu->pc += 2;
-
 			break;
-		// TODO: Reimplement later
 		case 0xdb: // IN d8
 			cpu->a = in(cpu, opcode[1]);
 			cpu->pc++;
@@ -1204,7 +1179,6 @@ emulate(struct CPU *cpu) {
 		case 0xdd: // 0xdd ILLEGAL
 			unimplemented(opcode[0]);
 			break;
-
 		case 0xde: // SBI d8
 		{
 			uint16_t a = cpu->a + (cpu->flags.c << 8);
@@ -1220,14 +1194,12 @@ emulate(struct CPU *cpu) {
 		case 0xe0: // RPO
 			if (cpu->flags.p == 0)
 				ret(cpu);
-
 			break;
 		case 0xe1: // POP H
 		{
 			uint16_t val = pop(cpu);
 			cpu->h = val >> 8;
 			cpu->l = val & 0xff;
-
 			break;
 		}
 		case 0xe2: // JPO a16
@@ -1253,16 +1225,12 @@ emulate(struct CPU *cpu) {
 			break;
 		case 0xe5: // PUSH H
 			push(cpu, cpu->h, cpu->l);
-
 			break;
 		case 0xe6: // ANI d8
 			cpu->a &= opcode[1];
-
 			flagsZSP(cpu, cpu->a);
 			cpu->flags.c = 0;
-
 			cpu->pc++;
-
 			break;
 		case 0xe7: // RST 4
 			unimplemented(opcode[0]);
@@ -1301,7 +1269,6 @@ emulate(struct CPU *cpu) {
 		case 0xed: // 0xed ILLEGAL
 			unimplemented(opcode[0]);
 			break;
-
 		case 0xee: // XRI d8
 			cpu->a ^= opcode[1];
 			flagsZSP(cpu, cpu->a);
@@ -1320,8 +1287,6 @@ emulate(struct CPU *cpu) {
 			uint16_t af = pop(cpu);
 			cpu->a = af >> 8;
 			set_psw(&cpu->flags, af & 0xff);
-
-
 			break;
 		}
 		case 0xf2: // JP a16
@@ -1329,7 +1294,6 @@ emulate(struct CPU *cpu) {
 				cpu->pc = (opcode[2] << 8) | opcode[1];
 			else
 				cpu->pc += 2;
-
 			break;
 		case 0xf3: // DI
 			cpu->interrupts = 0;
@@ -1370,7 +1334,6 @@ emulate(struct CPU *cpu) {
 				cpu->pc = (opcode[2] << 8) | opcode[1];
 			else
 				cpu->pc += 2;
-
 			break;
 		case 0xfb: // EI
 			cpu->interrupts = 1;
@@ -1384,7 +1347,6 @@ emulate(struct CPU *cpu) {
 		case 0xfd: // 0xfd ILLEGAL
 			unimplemented(opcode[0]);
 			break;
-
 		case 0xfe: // CPI d8
 		{
 			uint16_t res = cpu->a - opcode[1];
