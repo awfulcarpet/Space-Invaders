@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdlib.h>
+#include <SDL2/SDL.h>
 
 #include "cpu.h"
 #include "machine.h"
@@ -20,6 +21,11 @@ machine_init(struct Machine *machine) {
 	}
 
 	return 0;
+}
+
+void
+machine_draw_surface(struct Machine *machine) {
+	SDL_FillRect(machine->screen, NULL, SDL_MapRGB(machine->screen->format, 0xFF, 0xff, 0xff));
 }
 
 void

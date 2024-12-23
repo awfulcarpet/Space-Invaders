@@ -6,10 +6,12 @@ struct Machine {
 	uint8_t oports[7];
 	uint16_t shift;
 	uint8_t offset;
-	void *video; // implement later
+
+	SDL_Surface *screen;
 };
 
 int machine_init(struct Machine *machine);
+void machine_draw_surface(struct Machine *machine);
 
 void shift_register(struct Machine *machine);
 void print_shift(struct Machine *machine);

@@ -699,7 +699,6 @@ emulate(struct CPU *cpu) {
 			cpu->a = cpu->e;
 			break;
 		case 0x7c: // MOV A,H
-			printf("%02x %02x\n", cpu->a, cpu->h);
 			cpu->a = cpu->h;
 			break;
 		case 0x7d: // MOV A,L
