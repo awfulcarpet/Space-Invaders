@@ -1380,7 +1380,7 @@ emulate(struct CPU *cpu) {
 
 			break;
 		case 0xf3: // DI
-			unimplemented(opcode[0]);
+			cpu->interrupts = 0;
 			break;
 		case 0xf4: // CP a16
 			if (cpu->flags.s == 0)
@@ -1431,7 +1431,6 @@ emulate(struct CPU *cpu) {
 			break;
 		case 0xfb: // EI
 			cpu->interrupts = 1;
-
 			break;
 		case 0xfc: // CM a16
 			if (cpu->flags.s == 1)
