@@ -1,6 +1,7 @@
 #include <sys/time.h>
 #include <stdint.h>
 #include <assert.h>
+#include "dissasemble.h"
 #include "cpu.h"
 #include "machine.h"
 
@@ -23,6 +24,7 @@ main(void) {
 	print_cpu_state(cabinet.cpu, cycles);
 	double last_interrupt = 0;
 	while (1) {
+		get_opname(cabinet.cpu->ram, cabinet.cpu->pc);
 		cycles += emulate(cabinet.cpu);
 		shift_register(&cabinet);
 		print_cpu_state(cabinet.cpu, cycles);
