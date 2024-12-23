@@ -1066,16 +1066,8 @@ emulate(struct CPU *cpu) {
 			break;
 		}
 		case 0xc7: // RST 0
-		{
 			unimplemented(opcode[0]);
-			uint16_t adr = cpu->pc + 3;
-			cpu->ram[cpu->sp-1] = (adr >> 8) & 0xff;
-			cpu->ram[cpu->sp-2] = adr & 0xff;
-			cpu->sp -= 2;
-			cpu->pc = 0x0000;
-
 			break;
-		}
 		case 0xc8: // RZ
 			if (cpu->flags.z)
 				ret(cpu);
@@ -1134,16 +1126,8 @@ emulate(struct CPU *cpu) {
 			break;
 		}
 		case 0xcf: // RST 1
-		{
 			unimplemented(opcode[0]);
-			uint16_t adr = cpu->pc + 3;
-			cpu->ram[cpu->sp-1] = (adr >> 8) & 0xff;
-			cpu->ram[cpu->sp-2] = adr & 0xff;
-			cpu->sp -= 2;
-			cpu->pc = 0x0008;
-
 			break;
-		}
 		case 0xd0: // RNC
 			if (cpu->flags.c == 0)
 				ret(cpu);
@@ -1190,15 +1174,7 @@ emulate(struct CPU *cpu) {
 		}
 		case 0xd7: // RST 2
 			unimplemented(opcode[0]);
-		{
-			uint16_t adr = cpu->pc + 3;
-			cpu->ram[cpu->sp-1] = (adr >> 8) & 0xff;
-			cpu->ram[cpu->sp-2] = adr & 0xff;
-			cpu->sp -= 2;
-			cpu->pc = 0x0010;
-
 			break;
-		}
 		case 0xd8: // RC
 			if (cpu->flags.c)
 				ret(cpu);
@@ -1239,16 +1215,8 @@ emulate(struct CPU *cpu) {
 			break;
 		}
 		case 0xdf: // RST 3
-		{
 			unimplemented(opcode[0]);
-			uint16_t adr = cpu->pc + 3;
-			cpu->ram[cpu->sp-1] = (adr >> 8) & 0xff;
-			cpu->ram[cpu->sp-2] = adr & 0xff;
-			cpu->sp -= 2;
-			cpu->pc = 0x0018;
-
 			break;
-		}
 		case 0xe0: // RPO
 			if (cpu->flags.p == 0)
 				ret(cpu);
@@ -1297,16 +1265,8 @@ emulate(struct CPU *cpu) {
 
 			break;
 		case 0xe7: // RST 4
-		{
 			unimplemented(opcode[0]);
-			uint16_t adr = cpu->pc + 3;
-			cpu->ram[cpu->sp-1] = (adr >> 8) & 0xff;
-			cpu->ram[cpu->sp-2] = adr & 0xff;
-			cpu->sp -= 2;
-			cpu->pc = 0x0020;
-
 			break;
-		}
 		case 0xe8: // RPE
 			if (cpu->flags.p)
 				ret(cpu);
@@ -1349,16 +1309,8 @@ emulate(struct CPU *cpu) {
 			cpu->pc++;
 			break;
 		case 0xef: // RST 5
-		{
 			unimplemented(opcode[0]);
-			uint16_t adr = cpu->pc + 3;
-			cpu->ram[cpu->sp-1] = (adr >> 8) & 0xff;
-			cpu->ram[cpu->sp-2] = adr & 0xff;
-			cpu->sp -= 2;
-			cpu->pc = 0x0028;
-
 			break;
-		}
 		case 0xf0: // RP
 			if (cpu->flags.s == 0)
 				ret(cpu);
@@ -1392,7 +1344,6 @@ emulate(struct CPU *cpu) {
 		{
 			uint8_t psw = get_psw(&cpu->flags);
 			push(cpu, cpu->a, psw);
-
 			break;
 		}
 		case 0xf6: // ORI d8
@@ -1402,16 +1353,8 @@ emulate(struct CPU *cpu) {
 			cpu->pc++;
 			break;
 		case 0xf7: // RST 6
-		{
 			unimplemented(opcode[0]);
-			uint16_t adr = cpu->pc + 3;
-			cpu->ram[cpu->sp-1] = (adr >> 8) & 0xff;
-			cpu->ram[cpu->sp-2] = adr & 0xff;
-			cpu->sp -= 2;
-			cpu->pc = 0x0030;
-
 			break;
-		}
 		case 0xf8: // RM
 			if (cpu->flags.s)
 				ret(cpu);
@@ -1451,15 +1394,8 @@ emulate(struct CPU *cpu) {
 			break;
 		}
 		case 0xff: // RST 7
-		{
 			unimplemented(opcode[0]);
-			uint16_t adr = cpu->pc + 3;
-			cpu->ram[cpu->sp-1] = (adr >> 8) & 0xff;
-			cpu->ram[cpu->sp-2] = adr & 0xff;
-			cpu->sp -= 2;
-			cpu->pc = 0x0038;
 			break;
-		}
 	}
 
 	return cycles8080[*opcode];
