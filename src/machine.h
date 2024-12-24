@@ -7,7 +7,7 @@ struct Machine {
 	uint16_t shift;
 	uint8_t offset;
 
-	SDL_Surface *screen;
+	uint32_t *framebuffer;
 };
 
 int machine_init(struct Machine *machine);

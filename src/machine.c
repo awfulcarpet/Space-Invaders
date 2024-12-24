@@ -25,7 +25,10 @@ machine_init(struct Machine *machine) {
 
 void
 machine_draw_surface(struct Machine *machine) {
-	SDL_FillRect(machine->screen, NULL, SDL_MapRGB(machine->screen->format, 0xFF, 0xff, 0xff));
+	uint32_t *pixel = machine->framebuffer;
+	for (int x = 0; x < 224; x++) {
+		pixel[10 * 224 + x] = 0xFFFFFF;
+	}
 }
 
 void

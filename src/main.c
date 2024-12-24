@@ -40,7 +40,7 @@ main(int argc, char **argv) {
 		return 1;
 	}
 
-	cabinet.screen = SDL_GetWindowSurface(win);
+	cabinet.framebuffer = SDL_GetWindowSurface(win)->pixels; // destroy window will free the surface for us
 
 	SDL_Event e;
 
@@ -52,7 +52,6 @@ main(int argc, char **argv) {
 		double dt = getmsec() - timer;
 		int cycle_target = dt * 2000; // 2000 cycles per milisecond
 
-		printf("%d\n", cycle_target);
 		for (cycles = 0; cycles < cycle_target;) {
 			cycles += emulate(cabinet.cpu);
 			shift_register(&cabinet);
