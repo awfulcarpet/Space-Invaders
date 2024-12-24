@@ -531,8 +531,11 @@ emulate(struct CPU *cpu) {
 			cpu->c = cpu->l;
 			break;
 		case 0x4e: // MOV C,M
-			unimplemented(opcode[0]);
+		{
+			uint16_t adr = cpu->h << 8 | cpu->l;
+			cpu->c = cpu->ram[adr];
 			break;
+		}
 		case 0x4f: // MOV C,A
 			cpu->c = cpu->a;
 			break;
@@ -651,8 +654,11 @@ emulate(struct CPU *cpu) {
 			break;
 		}
 		case 0x71: // MOV M,C
-			unimplemented(opcode[0]);
+		{
+			uint16_t adr = cpu->h << 8 | cpu->l;
+			cpu->ram[adr] = cpu->c;
 			break;
+		}
 		case 0x72: // MOV M,D
 		{
 			uint16_t adr = cpu->h << 8 | cpu->l;
@@ -1076,26 +1082,7 @@ emulate(struct CPU *cpu) {
 			break;
 		case 0xcd: // CALL a16
 		{
-#ifdef TEST
-			if (5 == ((opcode[2] << 8) | opcode[1])) {
-				if (cpu->c == 9) {
-					uint16_t offset = (cpu->d << 8) | (cpu->e);
-					char *str = (char *)&cpu->ram[offset+3];
-					while (*str != '$')
-						printf("%c", *str++);
-					printf("\n\n");
-
-					exit(1);
-				} else if (cpu->c == 2) {
-					printf("print char routine called\n");
-				}
-			} else if (0 == ((opcode[2] << 8) | opcode[1])) {
-				exit(0);
-			} else
-#endif
-			{
 			call(cpu, opcode);
-			}
 			break;
 		}
 		case 0xce: // ACI d8

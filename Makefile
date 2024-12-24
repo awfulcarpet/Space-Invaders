@@ -24,7 +24,8 @@ $(NAME): $(OBJ)
 
 tests: clean
 	@mkdir -p $(OUTDIR)
-	$(CC) -o $(OUTDIR)/tests -D TEST $(CFLAGS) $(LDLIBS) $(LDFLAGS) src/dissasembler.c src/cpu.c tests/emulator.c
+	# $(CC) -o $(OUTDIR)/tests -D TEST $(CFLAGS) $(LDLIBS) $(LDFLAGS) src/dissasembler.c src/cpu.c tests/emulator.c
+	$(CC) -o $(OUTDIR)/tests  $(CFLAGS) $(LDLIBS) $(LDFLAGS) src/dissasembler.c src/cpu.c tests/emulator.c
 	$(OUTDIR)/tests
 
 release: $(NAME)
