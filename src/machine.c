@@ -1,10 +1,14 @@
 #include <SDL2/SDL_events.h>
+#include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <SDL2/SDL.h>
 
 #include "cpu.h"
 #include "machine.h"
+
+const int WIDTH = 224;
+const int HEIGHT = 256;
 
 int
 machine_init(struct Machine *machine) {
@@ -37,8 +41,21 @@ void get_input(struct Machine *machine) {
 void
 machine_draw_surface(struct Machine *machine) {
 	uint32_t *pixel = machine->framebuffer;
-	for (int x = 0; x < 224; x++) {
-		pixel[10 * 224 + x] = 0xFFFFFF;
+	uint8_t *fb = &machine->cpu->ram[0x2400];
+
+	for (int col = 0; col < WIDTH; col++) {
+		for (int line = 0; line < HEIGHT; line += 8) {
+			uint8_t chunk = fb[col * (HEIGHT/8) + (line/8)];
+
+			for (int p = 0; p < 8; p++) {
+				uint16_t idx = (HEIGHT - 1 - line - p) * WIDTH + col;
+
+				if (chunk & (0x1 << p))
+					pixel[idx] = 0xFFFFFF;
+				else
+					pixel[idx] = 0x000000;
+			}
+		}
 	}
 }
 

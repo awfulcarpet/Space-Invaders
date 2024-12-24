@@ -11,8 +11,9 @@
 #include "cpu.h"
 #include "machine.h"
 
-const int WIDTH = 224;
-const int HEIGHT = 256;
+extern const int WIDTH;
+extern const int HEIGHT;
+
 const int SCREEN_FPS = 60;
 const double MS_PER_FRAME = 1000.0 / 60.0;
 struct Machine cabinet = {0};
@@ -42,18 +43,14 @@ main(int argc, char **argv) {
 
 	cabinet.framebuffer = SDL_GetWindowSurface(win)->pixels; // destroy window will free the surface for us
 
-	SDL_Event e;
-
 	int cycles = 0;
-
 	double timer = getmsec();
+
 	while (1) {
-		double curr = getmsec();
 		double dt = getmsec() - timer;
 		int cycle_target = dt * 2000; // 2000 cycles per milisecond
 
 		for (cycles = 0; cycles < cycle_target;) {
-			print_cpu_state(cabinet.cpu, cycles);
 			cycles += emulate(cabinet.cpu);
 			shift_register(&cabinet);
 		}
@@ -70,6 +67,7 @@ main(int argc, char **argv) {
 		get_input(&cabinet);
 		SDL_Delay(MS_PER_FRAME);
 	}
+
 	SDL_DestroyWindow(win);
 	SDL_Quit();
 
