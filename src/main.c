@@ -15,7 +15,7 @@ extern const int WIDTH;
 extern const int HEIGHT;
 
 const int SCREEN_FPS = 60;
-const double MS_PER_FRAME = 1000.0 / 60.0;
+const double MS_PER_FRAME = 1000.0 / 60.0 / 8; // reduce devision to 2 to prevent speedup
 struct Machine cabinet = {0};
 
 double
@@ -46,6 +46,7 @@ main(int argc, char **argv) {
 	int cycles = 0;
 	double timer = getmsec();
 
+	int which = 1;
 	while (1) {
 		double dt = getmsec() - timer;
 		int cycle_target = dt * 2000; // 2000 cycles per milisecond
@@ -56,7 +57,13 @@ main(int argc, char **argv) {
 		}
 
 		if (cabinet.cpu->interrupts) {
-			generate_interrupt(cabinet.cpu, 2);
+			if (which) {
+				generate_interrupt(cabinet.cpu, 1);
+				which = 0;
+			} else {
+				generate_interrupt(cabinet.cpu, 2);
+				which = 1;
+			}
 		}
 
 		timer = getmsec();

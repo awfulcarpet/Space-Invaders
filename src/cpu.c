@@ -93,10 +93,8 @@ get_psw(struct Flags *flags) {
 	psw |= flags->s << 7;
 	psw |= flags->z << 6;
 	psw |= flags->k << 5;
-	psw |= 0 << 4;
-	psw |= 0 << 3;
 	psw |= flags->p << 2;
-	/*psw |= 1 << 1;*/
+	psw |= 1 << 1;
 	psw |= flags->c << 0;
 	return psw;
 }
@@ -119,6 +117,7 @@ void
 generate_interrupt(struct CPU *cpu, int interrupt_num) {
 	push(cpu, cpu->pc >> 8, cpu->pc & 0xff);
 	cpu->pc = 8 * interrupt_num;
+	cpu->interrupts = 0;
 }
 
 unsigned char cycles8080[] = {
@@ -1170,6 +1169,7 @@ emulate(struct CPU *cpu) {
 			uint16_t a = cpu->a + (cpu->flags.c << 8);
 			uint16_t tmp = a - opcode[1];
 			flagsZSP(cpu, tmp & 0xff);
+			cpu->a = tmp & 0xff;
 			cpu->flags.c = a >> 8;
 			cpu->pc++;
 			break;
