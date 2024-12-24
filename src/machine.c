@@ -1,3 +1,4 @@
+#include <SDL2/SDL_events.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <SDL2/SDL.h>
@@ -21,6 +22,16 @@ machine_init(struct Machine *machine) {
 	}
 
 	return 0;
+}
+
+void get_input(struct Machine *machine) {
+	SDL_Event e;
+	SDL_PollEvent(&e);
+	switch (e.type) {
+		case SDL_QUIT:
+			exit(1);
+		break;
+	}
 }
 
 void

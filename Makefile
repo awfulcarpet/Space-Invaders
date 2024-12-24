@@ -1,5 +1,5 @@
 WARNING = -Wall -Wextra -Wpedantic -Wno-unused-result -Wno-all
-CFLAGS = -std=c99 -O2 $(WARNING) -pipe -ggdb -Iinclude -I/usr/local/include
+CFLAGS = -std=c99 -O0 $(WARNING) -pipe -ggdb -Iinclude -I/usr/local/include
 LDLIBS = -lSDL2
 
 NAME = emulator

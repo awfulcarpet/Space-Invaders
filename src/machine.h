@@ -12,6 +12,7 @@ struct Machine {
 
 int machine_init(struct Machine *machine);
 void machine_draw_surface(struct Machine *machine);
+void get_input(struct Machine *machine);
 
 void shift_register(struct Machine *machine);
 void print_shift(struct Machine *machine);

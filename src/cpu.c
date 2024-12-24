@@ -29,7 +29,7 @@ map(struct CPU *cpu, FILE *f) {
 	fseek(f, 0, SEEK_END);
 	int len = ftell(f);
 	fseek(f, 0, SEEK_SET);
-	cpu->ram = calloc(len, sizeof(uint8_t));
+	cpu->ram = calloc(0x3FFF, sizeof(uint8_t));
 
 	fread(cpu->ram, sizeof(uint8_t), len, f);
 	return 0;
@@ -1367,6 +1367,7 @@ void print_cpu_state(struct CPU *cpu, int cycles) {
 	struct Flags *flags = &cpu->flags;
 
 	uint8_t psw = get_psw(flags);
+	printf("->%02x ", cpu->ram[cpu->pc]);
 	printf("cycles: %04d ", cycles);
 	printf("af: %02x%02x ", cpu->a, psw);
 	printf("bc: %02x%02x ", cpu->b, cpu->c);
