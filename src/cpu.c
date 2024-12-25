@@ -358,8 +358,15 @@ emulate(struct CPU *cpu) {
 			cpu->h = opcode[1];
 			cpu->pc++;
 			break;
+		// TODO: THIS IS A HACK.  Properly implement auxillary carry later
 		case 0x27: // DAA
-			unimplemented(opcode[0]);
+			if ((cpu->a & 0x0f) > 9)
+				cpu->a += 6;
+			if ((cpu->a & 0xf0) > 0x90) {
+				uint16_t res = (uint16_t) cpu->a + 0x60;
+				cpu->a = res & 0xff;
+				flagsZSPC(cpu, cpu->a);
+			}
 			break;
 		case 0x28: // 0x28 ILLEGAL
 			unimplemented(opcode[0]);
