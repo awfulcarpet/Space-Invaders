@@ -1,5 +1,6 @@
 # Space Invaders
 emulation of the original space invaders arcade cabinet in C and SDL2
+
 ![Space Invaders attract mode](res/attract.png)
 
 ## build & run
