@@ -12,8 +12,13 @@ jobs:
 
       - name: download rom
         run: wget https://github.com/cbeust/space-invade.rs/raw/refs/heads/main/space-invaders.rom
+
+      - name: cloning repo
+        uses: actions/checkout@v4
+
       - name: building for web
         run: PLATFORM=WEB make web-release
+
       - name: setup pages
         uses: actions/configure-pages@v3
 
