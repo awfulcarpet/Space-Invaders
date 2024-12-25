@@ -1,4 +1,6 @@
 #include <SDL2/SDL_events.h>
+#include <SDL2/SDL_keyboard.h>
+#include <SDL2/SDL_keycode.h>
 #include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -32,6 +34,42 @@ void get_input(struct Machine *machine) {
 	SDL_Event e;
 	SDL_PollEvent(&e);
 	switch (e.type) {
+		case SDL_KEYDOWN:
+		{
+				switch (e.key.keysym.sym) {
+					case SDLK_c: // coin
+						machine->iports[1] |= (0x1 << 0);
+						break;
+					case SDLK_SPACE:
+						machine->iports[1] |= (0x1 << 4);
+						break;
+					case SDLK_LEFT:
+						machine->iports[1] |= (0x1 << 5);
+						break;
+					case SDLK_RIGHT:
+						machine->iports[1] |= (0x1 << 6);
+						break;
+				}
+				break;
+		}
+		case SDL_KEYUP:
+		{
+				switch (e.key.keysym.sym) {
+					case SDLK_c: // coin
+						machine->iports[1] &= ~(0x1 << 0);
+						break;
+					case SDLK_SPACE:
+						machine->iports[1] &= ~(0x1 << 4);
+						break;
+					case SDLK_LEFT:
+						machine->iports[1] &= ~(0x1 << 5);
+						break;
+					case SDLK_RIGHT:
+						machine->iports[1] &= ~(0x1 << 6);
+						break;
+				}
+				break;
+		}
 		case SDL_QUIT:
 			exit(1);
 		break;
