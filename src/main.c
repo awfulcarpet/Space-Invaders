@@ -49,6 +49,8 @@ main(int argc, char **argv) {
 	int which = 1;
 	while (1) {
 		double dt = getmsec() - timer;
+		if (dt < MS_PER_FRAME)
+			continue;
 		int cycle_target = dt * 2000; // 2000 cycles per milisecond
 
 		for (cycles = 0; cycles < cycle_target;) {
@@ -72,7 +74,6 @@ main(int argc, char **argv) {
 		SDL_UpdateWindowSurface(win);
 
 		get_input(&cabinet);
-		SDL_Delay(MS_PER_FRAME);
 	}
 
 	SDL_DestroyWindow(win);
