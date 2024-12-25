@@ -29,7 +29,9 @@ map(struct CPU *cpu, FILE *f) {
 	fseek(f, 0, SEEK_END);
 	int len = ftell(f);
 	fseek(f, 0, SEEK_SET);
-	cpu->ram = calloc(0x3FFF, sizeof(uint8_t));
+
+	// 8k ROM + 1k RAM + 7k Video RAM + 1K Ram mirror
+	cpu->ram = calloc((8 + 1 + 7 + 1) * 1024, sizeof(char));
 
 	fread(cpu->ram, sizeof(uint8_t), len, f);
 	return 0;

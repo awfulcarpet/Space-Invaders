@@ -15,7 +15,7 @@ extern const int WIDTH;
 extern const int HEIGHT;
 
 const int SCREEN_FPS = 60;
-const double MS_PER_FRAME = 1000.0 / 60.0 / 8; // reduce devision to 2 to prevent speedup
+const double MS_PER_FRAME = 1000.0 / 60.0 / 2; // reduce devision to 2 to prevent speedup
 struct Machine cabinet = {0};
 
 double
