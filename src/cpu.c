@@ -84,7 +84,7 @@ flagsZSP(struct CPU *cpu, uint16_t num) {
 static void
 flagsZSPC(struct CPU *cpu, uint16_t num) {
 	flagsZSP(cpu, num);
-	cpu->flags.c = num > 0xff;
+	cpu->flags.c = num >= 0xff;
 }
 
 static uint8_t
@@ -281,7 +281,7 @@ emulate(struct CPU *cpu) {
 			uint16_t hl = (cpu->h << 8) | cpu->l;
 			uint16_t add = (cpu->d << 8) | cpu->e;
 
-			uint16_t res = hl + add;
+			uint32_t res = hl + add;
 			cpu->h = res >> 8;
 			cpu->l = res & 0xff;
 			cpu->flags.c = (res >> 16) & 1;
@@ -367,7 +367,7 @@ emulate(struct CPU *cpu) {
 			uint16_t hl = (cpu->h << 8) | cpu->l;
 			uint16_t add = (cpu->h << 8) | cpu->l;
 
-			uint16_t res = hl + add;
+			uint32_t res = hl + add;
 			cpu->h = res >> 8;
 			cpu->l = res & 0xff;
 
@@ -453,7 +453,7 @@ emulate(struct CPU *cpu) {
 		{
 			uint16_t hl = (cpu->h << 8) | cpu->l;
 
-			uint16_t res = hl + cpu->sp;
+			uint32_t res = hl + cpu->sp;
 			cpu->h = res >> 8;
 			cpu->l = res & 0xff;
 			cpu->flags.c = (res >> 16) & 1;
@@ -755,39 +755,39 @@ emulate(struct CPU *cpu) {
 			cpu->a += cpu->a;
 			break;
 		case 0x88: // ADC B
-			cpu->a += cpu->b + cpu->flags.c;
 			flagsZSPC(cpu, cpu->a + cpu->b + cpu->flags.c);
+			cpu->a += cpu->b + cpu->flags.c;
 			break;
 		case 0x89: // ADC C
-			cpu->a += cpu->c + cpu->flags.c;
 			flagsZSPC(cpu, cpu->a + cpu->c + cpu->flags.c);
+			cpu->a += cpu->c + cpu->flags.c;
 			break;
 		case 0x8a: // ADC D
-			cpu->a += cpu->d + cpu->flags.c;
 			flagsZSPC(cpu, cpu->a + cpu->d + cpu->flags.c);
+			cpu->a += cpu->d + cpu->flags.c;
 			break;
 		case 0x8b: // ADC E
-			cpu->a += cpu->e + cpu->flags.c;
 			flagsZSPC(cpu, cpu->a + cpu->e + cpu->flags.c);
+			cpu->a += cpu->e + cpu->flags.c;
 			break;
 		case 0x8c: // ADC H
-			cpu->a += cpu->h + cpu->flags.c;
 			flagsZSPC(cpu, cpu->a + cpu->h + cpu->flags.c);
+			cpu->a += cpu->h + cpu->flags.c;
 			break;
 		case 0x8d: // ADC L
-			cpu->a += cpu->l + cpu->flags.c;
 			flagsZSPC(cpu, cpu->a + cpu->l + cpu->flags.c);
+			cpu->a += cpu->l + cpu->flags.c;
 			break;
 		case 0x8e: // ADC M
 		{
 			uint16_t adr = cpu->h << 8 | cpu->l;
-			cpu->a += cpu->ram[adr] + cpu->flags.c;
 			flagsZSPC(cpu, cpu->a + cpu->ram[adr] + cpu->flags.c);
+			cpu->a += cpu->ram[adr] + cpu->flags.c;
 			break;
 		}
 		case 0x8f: // ADC A
-			cpu->a += cpu->a + cpu->flags.c;
 			flagsZSPC(cpu, cpu->a + cpu->a + cpu->flags.c);
+			cpu->a += cpu->a + cpu->flags.c;
 			break;
 		case 0x90: // SUB B
 			flagsZSPC(cpu, cpu->a - cpu->b);
@@ -825,39 +825,39 @@ emulate(struct CPU *cpu) {
 			cpu->a -= cpu->e;
 			break;
 		case 0x98: // SBB B
-			cpu->a += - cpu->b - cpu->flags.c;
 			flagsZSPC(cpu, cpu->a - cpu->a - cpu->flags.c);
+			cpu->a += - cpu->b - cpu->flags.c;
 			break;
 		case 0x99: // SBB C
-			cpu->a += - cpu->c - cpu->flags.c;
 			flagsZSPC(cpu, cpu->a - cpu->c - cpu->flags.c);
+			cpu->a += - cpu->c - cpu->flags.c;
 			break;
 		case 0x9a: // SBB D
-			cpu->a += - cpu->d - cpu->flags.c;
 			flagsZSPC(cpu, cpu->a - cpu->d - cpu->flags.c);
+			cpu->a += - cpu->d - cpu->flags.c;
 			break;
 		case 0x9b: // SBB E
-			cpu->a += - cpu->e - cpu->flags.c;
 			flagsZSPC(cpu, cpu->a - cpu->e - cpu->flags.c);
+			cpu->a += - cpu->e - cpu->flags.c;
 			break;
 		case 0x9c: // SBB H
-			cpu->a += - cpu->h - cpu->flags.c;
 			flagsZSPC(cpu, cpu->a - cpu->h - cpu->flags.c);
+			cpu->a += - cpu->h - cpu->flags.c;
 			break;
 		case 0x9d: // SBB L
-			cpu->a += - cpu->l - cpu->flags.c;
 			flagsZSPC(cpu, cpu->a - cpu->l - cpu->flags.c);
+			cpu->a += - cpu->l - cpu->flags.c;
 			break;
 		case 0x9e: // SBB M
 		{
 			uint16_t adr = cpu->h << 8 | cpu->l;
-			cpu->a += - cpu->ram[adr] - cpu->flags.c;
 			flagsZSPC(cpu, cpu->a - cpu->ram[adr] - cpu->flags.c);
+			cpu->a += - cpu->ram[adr] - cpu->flags.c;
 			break;
 		}
 		case 0x9f: // SBB A
-			cpu->a += - cpu->a - cpu->flags.c;
 			flagsZSPC(cpu, cpu->a - cpu->a - cpu->flags.c);
+			cpu->a += - cpu->a - cpu->flags.c;
 			break;
 		case 0xa0: // ANA B
 			cpu->a &= cpu->b;
@@ -1166,11 +1166,10 @@ emulate(struct CPU *cpu) {
 			break;
 		case 0xde: // SBI d8
 		{
-			uint16_t a = cpu->a + (cpu->flags.c << 8);
-			uint16_t tmp = a - opcode[1];
+			uint16_t tmp = cpu->a - cpu->flags.c - opcode[1];
 			flagsZSP(cpu, tmp & 0xff);
 			cpu->a = tmp & 0xff;
-			cpu->flags.c = a >> 8;
+			cpu->flags.c = tmp > 0xff;
 			cpu->pc++;
 			break;
 		}
