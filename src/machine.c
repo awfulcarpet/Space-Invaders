@@ -40,6 +40,9 @@ void get_input(struct Machine *machine) {
 					case SDLK_c: // coin
 						machine->iports[1] |= (0x1 << 0);
 						break;
+					case SDLK_BACKSPACE:
+						machine->iports[1] |= (0x1 << 1);
+						break;
 					case SDLK_RETURN:
 						machine->iports[1] |= (0x1 << 2);
 						break;
@@ -52,6 +55,15 @@ void get_input(struct Machine *machine) {
 					case SDLK_RIGHT:
 						machine->iports[1] |= (0x1 << 6);
 						break;
+					case SDLK_f:
+						machine->iports[2] |= (0x1 << 4);
+						break;
+					case SDLK_a:
+						machine->iports[2] |= (0x1 << 5);
+						break;
+					case SDLK_d:
+						machine->iports[2] |= (0x1 << 6);
+						break;
 				}
 				break;
 		}
@@ -60,6 +72,9 @@ void get_input(struct Machine *machine) {
 				switch (e.key.keysym.sym) {
 					case SDLK_c: // coin
 						machine->iports[1] &= ~(0x1 << 0);
+						break;
+					case SDLK_BACKSPACE:
+						machine->iports[1] &= ~(0x1 << 1);
 						break;
 					case SDLK_RETURN:
 						machine->iports[1] &= ~(0x1 << 2);
@@ -72,6 +87,15 @@ void get_input(struct Machine *machine) {
 						break;
 					case SDLK_RIGHT:
 						machine->iports[1] &= ~(0x1 << 6);
+						break;
+					case SDLK_f:
+						machine->iports[2] &= ~(0x1 << 4);
+						break;
+					case SDLK_a:
+						machine->iports[2] &= ~(0x1 << 5);
+						break;
+					case SDLK_d:
+						machine->iports[2] &= ~(0x1 << 6);
 						break;
 				}
 				break;
