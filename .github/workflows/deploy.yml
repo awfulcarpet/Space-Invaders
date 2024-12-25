@@ -10,11 +10,12 @@ jobs:
     steps:
       - uses: mymindstorm/setup-emsdk@v14
 
-      - name: download rom
-        run: wget https://github.com/cbeust/space-invade.rs/raw/refs/heads/main/space-invaders.rom
 
       - name: cloning repo
         uses: actions/checkout@v4
+
+      - name: download rom
+        run: wget https://github.com/cbeust/space-invade.rs/raw/refs/heads/main/space-invaders.rom
 
       - name: building for web
         run: PLATFORM=WEB make web-release
