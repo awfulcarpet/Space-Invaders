@@ -40,6 +40,9 @@ void get_input(struct Machine *machine) {
 					case SDLK_c: // coin
 						machine->iports[1] |= (0x1 << 0);
 						break;
+					case SDLK_RETURN:
+						machine->iports[1] |= (0x1 << 2);
+						break;
 					case SDLK_SPACE:
 						machine->iports[1] |= (0x1 << 4);
 						break;
@@ -57,6 +60,9 @@ void get_input(struct Machine *machine) {
 				switch (e.key.keysym.sym) {
 					case SDLK_c: // coin
 						machine->iports[1] &= ~(0x1 << 0);
+						break;
+					case SDLK_RETURN:
+						machine->iports[1] &= ~(0x1 << 2);
 						break;
 					case SDLK_SPACE:
 						machine->iports[1] &= ~(0x1 << 4);
