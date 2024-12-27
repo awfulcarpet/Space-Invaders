@@ -35,8 +35,6 @@ web-release: clean $(NAME)
 	@mkdir -p pub
 	mv -f .build/$(NAME).* pub/
 	mv pub/emulator.html pub/index.html
-	# cp pub/$(NAME).data .
-	# sed 's/$(NAME).js/pub\/$(NAME).js/g' pub/$(NAME).html > index.html
 
 tests: clean
 	@mkdir -p $(OUTDIR)
