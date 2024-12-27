@@ -13,10 +13,14 @@ const int WIDTH = 224;
 const int HEIGHT = 256;
 
 int
-machine_init(struct Machine *machine) {
+machine_init(struct Machine *machine, char *filename) {
 	machine->cpu = calloc(1, sizeof(struct CPU));
 
-	FILE *f = fopen("space-invaders.rom", "r");
+#ifndef WEB
+	FILE *f = fopen(filename, "r");
+#else
+	FILE *f = fopen(ROM, "r");
+#endif
 	if (map(machine->cpu, f)) return 1;
 	fclose(f);
 

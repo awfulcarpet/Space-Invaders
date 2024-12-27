@@ -1,7 +1,7 @@
 WARNING = -Wall -Wextra -Wpedantic -Wno-unused-result -Wno-all
 CFLAGS = -std=c99 -O0 $(WARNING) -pipe -ggdb -Iinclude -I/usr/local/include
 LDLIBS = -lSDL2
-EMCCFLAGS = -s USE_SDL=2 -s USE_GLFW=3 --shell-file minshell.html -s ASYNCIFY --preload-file space-invaders.rom
+EMCCFLAGS = -s USE_SDL=2 -s USE_GLFW=3 --shell-file minshell.html -s ASYNCIFY --preload-file $(ROM)
 PLATFORM ?= PLATFORM_DESKTOP
 
 ifeq ($(PLATFORM),WEB)
@@ -10,6 +10,7 @@ ifeq ($(PLATFORM),WEB)
 	EXT = .html
 endif
 
+ROM = space-invaders.rom
 NAME = emulator
 OUTDIR = .build
 OBJ = \
@@ -21,11 +22,11 @@ OBJ = \
 all: $(NAME)
 
 run: $(NAME)
-	$(OUTDIR)/$(NAME) space-invaders.rom
+	$(OUTDIR)/$(NAME) $(ROM)
 
 $(OUTDIR)/%.o: src/%.c
 	@mkdir -p $(OUTDIR)
-	$(CC) -c $(CFLAGS) -o $@ $< -D$(PLATFORM) $(LDLIBS)
+	$(CC) -c $(CFLAGS) -o $@ $< -D$(PLATFORM) $(LDLIBS) -DROM=\"$(ROM)\"
 
 $(NAME): $(OBJ)
 	$(CC) -o $(OUTDIR)/$@$(EXT) $^ $(LDLIBS) $(LDFLAGS)

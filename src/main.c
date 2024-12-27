@@ -27,7 +27,11 @@ getmsec() {
 
 int
 main(int argc, char **argv) {
-	assert(machine_init(&cabinet) == 0);
+#ifndef WEB
+	assert(machine_init(&cabinet, argv[1]) == 0);
+#else
+	assert(machine_init(&cabinet, NULL) == 0);
+#endif
 
 	if (SDL_Init(SDL_INIT_VIDEO)) {
 		fprintf(stderr, "unable to init SDL: %s\n", SDL_GetError());

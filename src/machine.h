@@ -10,7 +10,7 @@ struct Machine {
 	uint32_t *framebuffer;
 };
 
-int machine_init(struct Machine *machine);
+int machine_init(struct Machine *machine, char *filename);
 void machine_draw_surface(struct Machine *machine);
 void get_input(struct Machine *machine);
 
