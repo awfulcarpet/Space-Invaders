@@ -35,6 +35,7 @@ web-release: clean $(NAME)
 	@mkdir -p pub
 	mv -f .build/$(NAME).* pub/
 	mv pub/emulator.html pub/index.html
+	cp res/favicon.png pub/favicon.png
 
 tests: clean
 	@mkdir -p $(OUTDIR)
