@@ -11,6 +11,7 @@
 
 const int WIDTH = 224;
 const int HEIGHT = 256;
+const int SCALE = 2;
 
 int
 machine_init(struct Machine *machine, char *filename) {
@@ -120,12 +121,14 @@ machine_draw_surface(struct Machine *machine) {
 			uint8_t chunk = fb[col * (HEIGHT/8) + (line/8)];
 
 			for (int p = 0; p < 8; p++) {
-				uint16_t idx = (HEIGHT - 1 - line - p) * WIDTH + col;
+				uint16_t x = (HEIGHT - 1 - line - p) * SCALE * SCALE;
+				uint16_t y = col * SCALE;
 
 				if (chunk & (0x1 << p))
-					pixel[idx] = 0xFFFFFF;
+					pixel[x * WIDTH + y] = 0xFFFFFF;
 				else
-					pixel[idx] = 0x000000;
+					pixel[x * WIDTH + y] = 0x000000;
+
 			}
 		}
 	}

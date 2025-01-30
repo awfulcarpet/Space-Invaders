@@ -13,6 +13,7 @@
 
 extern const int WIDTH;
 extern const int HEIGHT;
+extern const int SCALE;
 
 const int SCREEN_FPS = 60;
 const double MS_PER_FRAME = 1000.0 / 60.0 / 2; // reduce devision to 2 to prevent speedup
@@ -38,7 +39,7 @@ main(int argc, char **argv) {
 		return 1;
 	}
 
-	SDL_Window *win = SDL_CreateWindow("Space Invaders", 0, 0, WIDTH, HEIGHT, SDL_WINDOW_SHOWN);
+	SDL_Window *win = SDL_CreateWindow("Space Invaders", 0, 0, WIDTH * SCALE, HEIGHT * SCALE, SDL_WINDOW_SHOWN);
 
 	if (win == NULL) {
 		fprintf(stderr, "unable to create sdl win: %s\n", SDL_GetError());
