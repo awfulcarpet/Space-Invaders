@@ -125,9 +125,12 @@ machine_draw_surface(struct Machine *machine) {
 				uint16_t y = col * SCALE;
 
 				if (chunk & (0x1 << p)) {
+					uint32_t color = 0xFFFFFF;
+					if (x * WIDTH > 0.74 * WIDTH * HEIGHT * SCALE * SCALE)
+						color = 0x00FF00;
 					for (int i = 0; i < SCALE; i++) {
-						pixel[x * WIDTH + y - i] = 0xFFFFFF;
-						pixel[x * WIDTH + y - i * WIDTH * SCALE] = 0xFFFFFF;
+						pixel[x * WIDTH + y - i] = color;
+						pixel[x * WIDTH + y - i * WIDTH * SCALE] = color;
 					}
 				} else {
 					for (int i = 0; i < SCALE; i++) {
