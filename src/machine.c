@@ -124,11 +124,17 @@ machine_draw_surface(struct Machine *machine) {
 				uint16_t x = (HEIGHT - 1 - line - p) * SCALE * SCALE;
 				uint16_t y = col * SCALE;
 
-				if (chunk & (0x1 << p))
-					pixel[x * WIDTH + y] = 0xFFFFFF;
-				else
-					pixel[x * WIDTH + y] = 0x000000;
-
+				if (chunk & (0x1 << p)) {
+					for (int i = 0; i < SCALE; i++) {
+						pixel[x * WIDTH + y - i] = 0xFFFFFF;
+						pixel[x * WIDTH + y - i * WIDTH * SCALE] = 0xFFFFFF;
+					}
+				} else {
+					for (int i = 0; i < SCALE; i++) {
+						pixel[x * WIDTH + y + i] = 0x000000;
+						pixel[x * WIDTH + y + i * WIDTH * SCALE] = 0x000000;
+					}
+				}
 			}
 		}
 	}
